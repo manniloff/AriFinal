@@ -1,0 +1,59 @@
+##Create SCTP Server
+#sctp server create <server-name> <host-ip> <host-port> <socket-type>
+#SCTP Server creation with multi-home sctp server create TestServer 10.2.50.145,10.2.50.146 2905
+sctp server create unifun 127.0.0.1 8310 TCP
+
+
+##Create SCTP Association
+#sctp association create <assoc-name> <CLIENT | SERVER> <server-name> <peer-ip> <peer-port> <host-ip> <host-port> <socket-type>
+#Create CLIENT SCTP Association sctp association create Assoc1 CLIENT 192.168.56.101 2905 192.168.56.1,192.168.56.1 2905
+#Create SERVER SCTP Association sctp association create Assoc2 SERVER TestServer 192.168.56.1 2905
+sctp association create Assoc1 SERVER unifun 127.0.0.1 8311 TCP
+sctp server start unifun
+
+##Create AS
+#m3ua as create <as-name> <AS | SGW | IPSP> mode <SE | DE> ipspType <client | server> rc <routing-context> traffic-mode <traffic mode> <network-appearance>
+m3ua as create AS1 SGW mode SE ipspType server traffic-mode loadshare
+
+##Create ASP
+#m3ua asp create <asp-name> <sctp-association>
+m3ua asp create ASP1 Assoc1
+
+## Add ASP to AS
+#m3ua as add <as-name> <asp-name>
+m3ua as add AS1 ASP1
+
+##Add Route 
+#m3ua route add <as-name> <dpc> <opc> <si>
+m3ua route add AS1 2 -1 -1
+
+##Start ASP
+m3ua asp start ASP1
+
+##SCCP
+#Create service access point
+#sccp sap create <id> <mtp3-id> <opc> <ni>
+sccp sap create 1 1 1 2
+
+#Create destination for service access point
+#sccp dest create <sap-id> <id> <first-dpc> <last-dpc> <first-sls> <last-sls> <sls-mask>
+sccp dest create 1 1 2 2 0 255 255
+
+# Create Remote Signaling Point
+#sccp rsp create <id> <remote-spc> <rspc-flag> <mask>
+sccp rsp create 1 2 0 0
+
+# Remote Sub-System Management
+#sccp rss create <id> <remote-spc> <remote-ssn> <rss-flag> <mark-prohibited-when-spc-resuming> prohibitedWhenSpcResuming
+sccp rss create 1 1 8 0
+
+##ISUP
+#isup create <localSpc> <ni>
+isup create 1 2
+#isup addcircuit <cic> <dpc>
+isup addcircuit 1 2
+isup addcircuit 2 2
+#isup start
+isup start
+
+
