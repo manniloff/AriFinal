@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.unifun.sigtran.beepcall.controler;
+package com.unifun.sigtran.caplayer.controller;
 
 import java.io.IOException;
 

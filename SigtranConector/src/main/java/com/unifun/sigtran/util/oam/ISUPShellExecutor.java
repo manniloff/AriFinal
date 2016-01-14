@@ -57,6 +57,29 @@ public class ISUPShellExecutor {
 	}
 	
 	/**
+	 * isup addgroupofcircuit <start cic nb. - end cic nb.> <dpc>
+	 * @param args
+	 * @return
+	 */
+	private String addGroupOfCircuit(String[] args){
+		if (args.length < 4){
+			return "Invalid Command";
+		}
+		String[] cics = args[2].split("-");
+		if (cics.length<2){
+			return "Please specifiy start cic and end cic separated by -";
+		}
+		int startCic = Integer.parseInt(cics[0]);
+		int endCic = Integer.parseInt(cics[1]);
+		int dpc = Integer.parseInt(args[3]);
+		for (int i=startCic; i<=endCic; i++){
+			circuitManager.addCircuit(i, dpc);
+		}		
+		return String.format("cics from %d to %d dpc: %d was added to Circuit Manager", startCic, endCic, dpc);
+		
+	}
+	
+	/**
 	 * isup rmcircuit <cic> <dpc>
 	 * @param args
 	 * @return
@@ -129,6 +152,10 @@ public class ISUPShellExecutor {
         //isup addcircuit <cic> <dpc>
         if(args[1].equalsIgnoreCase("addcircuit")){
         	return addCircuit(args);
+        }
+        //isup addgroupofcircuit <start cic nb. - end cic nb.> <dpc>
+        if(args[1].equalsIgnoreCase("addgroupofcircuit")){
+        	return addGroupOfCircuit(args);
         }
         //isup rmcircuit <cic> <dpc>
         if(args[1].equalsIgnoreCase("rmcircuit")){

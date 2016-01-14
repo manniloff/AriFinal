@@ -12,22 +12,26 @@ import org.mobicents.protocols.ss7.tcap.api.TCAPStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.unifun.sigtran.util.oam.MapShellExecutor;
+
 /**
  * @author <a href="mailto:romanbabin@gmail.com">Roman Babin </a>
  *
  */
-public class Map {
+public class MapStack {
     public static final Logger logger = LoggerFactory.getLogger(String.format("%1$-15s] ", "[MapLayer"));        
     private MAPStackImpl mapStack;
     private MAPProvider mapProvider;
+    private Tcap tcap;
     private  TCAPStack tcapStack;  
+    private MapShellExecutor mapShellExecutor;
 
 
-    public Map(TCAPStack tcapStack) {		
-		this.tcapStack = tcapStack;        
+    public MapStack(Tcap tcap) {		
+		this.tcap = tcap;        
 	}
   //TODO create a shell class that will intiatie map stack
-    public boolean init() {
+    public boolean init_old() {
         try {
         	logger.debug("Initializing MAP Stack ....");			
 			logger.debug("Initiate Map Stack with tcap provider");
@@ -40,6 +44,10 @@ public class Map {
             logger.error("[initMap]: " + ex.getMessage());
         }
         return false;
+    }
+    public boolean init(){
+    	this.mapShellExecutor = new MapShellExecutor(this);
+    	return true;
     }
 
     public void stop() {
@@ -61,4 +69,16 @@ public class Map {
     public MAPProvider getMapProvider() {
         return mapProvider;
     }
+	public MapShellExecutor getMapShellExecutor() {
+		return mapShellExecutor;
+	}
+	public TCAPStack getTcapStack() {
+		return tcapStack;
+	}
+	public Tcap getTcap() {
+		return tcap;
+	}
+	public void setTcapStack(TCAPStack tcapStack) {
+		this.tcapStack = tcapStack;
+	}
 }

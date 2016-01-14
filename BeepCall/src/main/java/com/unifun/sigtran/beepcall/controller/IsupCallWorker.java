@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.unifun.sigtran.beepcall.controler;
+package com.unifun.sigtran.beepcall.controller;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -21,8 +21,8 @@ import com.unifun.sigtran.beepcall.ISUPEventHandler;
  * @author rbabin
  *
  */
-public class AppWorker implements Runnable{
-	static final Logger logger = LoggerFactory.getLogger(String.format("[%1$-15s] %2$s", AppWorker.class.getSimpleName(), ""));
+public class IsupCallWorker implements Runnable{
+	static final Logger logger = LoggerFactory.getLogger(String.format("[%1$-15s] %2$s", IsupCallWorker.class.getSimpleName(), ""));
 	private AsyncContext asyncContext;	
 	private HashMap<String, String> params = new HashMap<>();
 	private PrintWriter out;
@@ -70,19 +70,22 @@ public class AppWorker implements Runnable{
 		}
 		//Validate Parameters Value
 		params.keySet().forEach((value) -> {
-			if (!params.get(value).matches("[0-9]+")){
-				out.print(String.format("{\"Status\":\"-1\", \"Error\":\"Invalid number: %s in parameter %s \"}",params.get(value), value ));
-				closeResource();
-				return;
+			if ("msisdnA".equals(value) || "msisdnB".equals(value)){
+				if (!params.get(value).matches("[0-9]+")){
+					out.print(String.format("{\"Status\":\"-1\", \"Error\":\"Invalid number: %s in parameter %s \"}",params.get(value), value ));
+					closeResource();
+					return;
+				}
 			}
 		});
+		int sessionId =-1;
 		try {
-			isupEventHandler.sendIAM(params.get("msisdnA"), params.get("msisdnB"));
+			sessionId=this.isupEventHandler.sendIAM(params.get("msisdnA"), params.get("msisdnB"));
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		out.print(String.format("{\"Status\":\"0\", \"Message\":\"Operation result will be writing in database \"}"));
+		out.print(String.format("{\"Status\":\"0\", \"Message\":\"Operation result will be writing in database \", \"SessionId\":%d}",sessionId));
 		closeResource();
 	}
 	

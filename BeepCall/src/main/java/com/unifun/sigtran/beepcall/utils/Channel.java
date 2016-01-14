@@ -3,12 +3,14 @@
  */
 package com.unifun.sigtran.beepcall.utils;
 
+import java.sql.Timestamp;
+
 /**
  * @author rbabin
  *
  */
 public class Channel {
-	public enum Circuit_states {
+	public enum CircuitStates {
 		  /* Circuit idle, ready to accept or initiate calls. */
 		  ST_IDLE,
 		  /* An IAM has been received, but no ACM or CON has been sent back yet. */
@@ -21,6 +23,7 @@ public class Channel {
 		  /* We have sent IAM and received ACM, so waiting for ANM. */
 		  ST_GOT_ACM,
 		  /* A call is connected (incoming or outgoing). */
+		  ST_GOT_CPG,
 		  ST_CONNECTED,
 		  /* A continuity check is ongoing */
 		  ST_CONCHECK,
@@ -34,26 +37,37 @@ public class Channel {
 		     sent, and we are waiting for RLC. If a REL is received in this state,
 		     send RLC and stay in this state, still waiting for RLC */
 		  ST_SENT_REL,
+		  ST_GOT_RSC,
+		  ST_SENT_RSC,
+		  ST_SENT_GRS,
 		  ST_BUSY,
 		};
-	protected Circuit_states state;
+	protected CircuitStates state;
 	protected int cic;
 	protected int dpc;
+	protected long channelId;
+	protected String callingParty;
+	protected String calledParty;
+	protected int causeIndicator;
+	protected Timestamp statrtDate;
+	protected Timestamp endDate;
+	int sessionId;
 	
-	
-	public Channel(int cic, int dpc) {
-		this.state = Circuit_states.ST_IDLE;
+
+	public Channel(int cic, int dpc, long channelId) {
+		this.state = CircuitStates.ST_CONCHECK;
 		this.cic = cic;
 		this.dpc = dpc;
+		this.channelId=channelId;
 	
 	}
 	
-	public Circuit_states getState() {
+	public CircuitStates getState() {
 		return state;
 	}
 
 
-	public void setState(Circuit_states state) {
+	public void setState(CircuitStates state) {
 		this.state = state;
 	}
 
@@ -69,7 +83,7 @@ public class Channel {
 	
 	@Override 
 	public String toString(){
-		return "Channel: CIC=" + cic + " State=" + this.state;
+		return "Channel: CIC=" + cic + "DPC="+dpc+" State=" + this.state;
 	}
 
 	public int getDpc() {
@@ -79,6 +93,63 @@ public class Channel {
 	public void setDpc(int dpc) {
 		this.dpc = dpc;
 	}
+
+	public long getChannelId() {
+		return channelId;
+	}
+
+	public void setChannelId(long channelId) {
+		this.channelId = channelId;
+	}
+
+	public int getSessionId() {
+		return sessionId;
+	}
+
+	public void setSessionId(int sessionId) {
+		this.sessionId = sessionId;
+	}
+
+	public String getCallingParty() {
+		return callingParty;
+	}
+
+	public void setCallingParty(String callingParty) {
+		this.callingParty = callingParty;
+	}
+
+	public String getCalledParty() {
+		return calledParty;
+	}
+
+	public void setCalledParty(String calledParty) {
+		this.calledParty = calledParty;
+	}
+
+	public int getCauseIndicator() {
+		return causeIndicator;
+	}
+
+	public void setCauseIndicator(int causeIndicator) {
+		this.causeIndicator = causeIndicator;
+	}
+
+	public Timestamp getStatrtDate() {
+		return statrtDate;
+	}
+
+	public void setStatrtDate(Timestamp statrtDate) {
+		this.statrtDate = statrtDate;
+	}
+
+	public Timestamp getEndDate() {
+		return endDate;
+	}
+
+	public void setEndDate(Timestamp endDate) {
+		this.endDate = endDate;
+	}
+
 
 }
 

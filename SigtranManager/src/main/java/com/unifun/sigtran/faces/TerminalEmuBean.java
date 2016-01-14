@@ -41,22 +41,32 @@ public class TerminalEmuBean {
 						if (args[0].compareToIgnoreCase("SCTP") == 0)
 						{							
 							respString = sigStack.getStack().getSctp().getSctpShellExecuter().execute(args);//this.sctpShellExecuter.execute(args);
-							return respString;
+							return encode(respString);
 						}
 						else if (args[0].compareToIgnoreCase("M3UA") == 0)
 						{							
 							respString = sigStack.getStack().getM3ua().getM3uaShellExecuter().execute(args);
-							return respString;							
+							return encode(respString);							
 						}
 						else if (args[0].compareToIgnoreCase("SCCP") == 0)
 						{
 							respString = sigStack.getStack().getSccp().getSccpShellExecuter().execute(args);//this.sccpShellExecuter.execute(args);
-							return respString;
+							return encode(respString);
 						}
 						else if (args[0].compareToIgnoreCase("ISUP") == 0)
 						{							
 							respString = sigStack.getStack().getIsup().getIsupShellExecutor().execute(args);//this.isupShellExecuter.execute(args);
-							return respString;
+							return encode(respString);
+						}
+						else if (args[0].compareToIgnoreCase("TCAP") == 0)
+						{							
+							respString = sigStack.getStack().getTcap().getTcapShellExecutor().execute(args);//this.isupShellExecuter.execute(args);
+							return encode(respString);
+						}
+						else if (args[0].compareToIgnoreCase("MAP") == 0)
+						{							
+							respString = sigStack.getStack().getMap().getMapShellExecutor().execute(args);//this.isupShellExecuter.execute(args);
+							return encode(respString);
 						}
 						else
 						{
@@ -82,5 +92,11 @@ public class TerminalEmuBean {
 	}
 	public void setSigStack(SigtranStackBean sigStack) {
 		this.sigStack = sigStack;
+	}
+	private String encode(String respString){
+		String encodeString = respString.replaceAll("\n", "\n<br/>");
+		encodeString = "<pre>"+encodeString+"</pre>";
+		return encodeString;
+		
 	}
 }

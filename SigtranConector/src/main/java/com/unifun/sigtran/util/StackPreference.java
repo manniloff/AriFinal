@@ -16,11 +16,13 @@ import org.slf4j.LoggerFactory;
 
 import com.unifun.sigtran.stack.Isup;
 import com.unifun.sigtran.stack.M3UA;
-import com.unifun.sigtran.stack.Map;
+import com.unifun.sigtran.stack.MapStack;
 import com.unifun.sigtran.stack.Sccp;
 import com.unifun.sigtran.stack.Sctp;
 import com.unifun.sigtran.stack.Tcap;
 import com.unifun.sigtran.util.oam.ISUPShellExecutor;
+import com.unifun.sigtran.util.oam.MapShellExecutor;
+import com.unifun.sigtran.util.oam.TCAPShellExecutor;
 
 /**
  * @author <a href="mailto:romanbabin@gmail.com">Roman Babin </a>
@@ -32,7 +34,7 @@ public class StackPreference {
     private M3UA m3ua;
     private Sccp sccp;
     private Tcap tcap;
-    private Map map;  
+    private MapStack map;  
     //
     private Isup isup;
     
@@ -40,6 +42,8 @@ public class StackPreference {
     private M3UAShellExecutor m3uaShellExecuter;
     private SccpExecutor sccpShellExecuter;
     private ISUPShellExecutor isupShellExecuter;
+    private TCAPShellExecutor tcapShellExecuter;
+    private MapShellExecutor mapShellExecuter;
     
     private int workerThreads;
     private String configPath;
@@ -60,16 +64,22 @@ public class StackPreference {
     	this.m3ua = new M3UA(this.sctp.getSctpManagement(), configPath);
     	if (!m3ua.init())
     		throw new Exception("Failed to initiate M3UA");
-    	this.sccp  = new Sccp(this.m3ua.getServerM3UAMgmt(), configPath);
+    	this.sccp  = new Sccp(this.m3ua.getServerM3UAMgmt(), configPath);    	
     	if(!this.sccp.init())
     		throw new Exception("Failed to initiate SCCP");
     	//TODO Init sccp, tcap and map layer
+    	this.tcap = new Tcap(this.sccp.getSccpStack());
+    	this.tcap.initTCAP();
+    	this.map = new MapStack(this.tcap);
+    	this.map.init();
         this.isup = new Isup(this.m3ua.getServerM3UAMgmt());
     	this.isup.init();
 		this.sctpShellExecuter = this.sctp.getSctpShellExecuter();
 		this.m3uaShellExecuter = this.m3ua.getM3uaShellExecuter();
 		this.sccpShellExecuter = this.sccp.getSccpShellExecuter();
 		this.isupShellExecuter = this.isup.getIsupShellExecutor();
+		this.tcapShellExecuter = this.tcap.getTcapShellExecutor();
+		this.mapShellExecuter = this.map.getMapShellExecutor();
 		if(br!=null)
 			readConfig(br);
     	
@@ -105,6 +115,18 @@ public class StackPreference {
     								{
     									logger.info(strLine);
     									respString = this.sccpShellExecuter.execute(args);
+    									logger.info(respString);
+    								}
+    								else if (args[0].compareToIgnoreCase("MAP") == 0)
+    								{
+    									logger.info(strLine);
+    									respString = this.mapShellExecuter.execute(args);
+    									logger.info(respString);
+    								}
+    								else if (args[0].compareToIgnoreCase("TCAP") == 0)
+    								{
+    									logger.info(strLine);
+    									respString = this.tcapShellExecuter.execute(args);
     									logger.info(respString);
     								}
     								else if (args[0].compareToIgnoreCase("ISUP") == 0)
@@ -182,7 +204,7 @@ public class StackPreference {
     /**
      * @return the map
      */
-    public Map getMap() {
+    public MapStack getMap() {
         return map;
     }
 

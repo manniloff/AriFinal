@@ -3,9 +3,10 @@
  */
 package com.unifun.sigtran.beepcall.service;
 
+import java.sql.SQLException;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import javax.naming.Context;
@@ -13,12 +14,14 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+import javax.sql.DataSource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.unifun.sigtran.adaptor.SigtranStackBean;
 import com.unifun.sigtran.beepcall.ISUPEventHandler;
+import com.unifun.sigtran.beepcall.persistence.FetchSettings;
 
 
 /**
@@ -30,8 +33,11 @@ public class BeepCallServiceListener implements ServletContextListener {
 	public static final Logger logger = LoggerFactory.getLogger(String.format("%1$-20s] ", "[BeepCallServiceListener"));
 	private static SigtranStackBean bean = null;
 	private ISUPEventHandler isupEventHandler;
-	//private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+	private DataSource ds;	
+	private ExecutorService dbWorker = null;
+	private Map<String, Map<String,String>> appSettings = null;
 	private ExecutorService exec = Executors.newFixedThreadPool(1);
+	
 	@Override
 	public void contextInitialized(ServletContextEvent sce) {
 		logger.info("Initiating BeepCallServiceListener");	
@@ -46,28 +52,17 @@ public class BeepCallServiceListener implements ServletContextListener {
 			e.printStackTrace();
 			logger.error(e.getMessage());
 		}
-		logger.debug("Lookup executor started");
-		//Start Scheduler that will reset amount of request
-//		logger.debug("Start Request amount scheduler");
-//		final Runnable resetCounterTask = new Runnable() {
-//		       public void run() { 
-//		    	   loadIsupListiner();
-//		    	   }
-//		     };
-//		try{
-//		     scheduler.scheduleAtFixedRate(resetCounterTask, 1, 1, TimeUnit.SECONDS);
-//		}catch (Exception e){
-//			e.printStackTrace();
-//			logger.error(e.getMessage());
-//		}
-		
-		
+		logger.debug("Lookup executor started");		
 	}
 	
 	@Override
 	public void contextDestroyed(ServletContextEvent sce) {
 		if (isupEventHandler!=null){
 			isupEventHandler.destroy();
+		}
+		this.exec.shutdown();
+		if (dbWorker!=null){
+			dbWorker.shutdown();
 		}
 		
 	}
@@ -82,9 +77,9 @@ public class BeepCallServiceListener implements ServletContextListener {
 			if (bean != null){
 				logger.info("Trying to append ISUP event handler");
 				//Initiate map listiner for usssd messages types
-				addIsupEventHandler();
+				addIsupEventHandler(sce);
 				contextloop = false;
-				sce.getServletContext().setAttribute("isupEventHandler", isupEventHandler);
+				sce.getServletContext().setAttribute("isupEventHandler", isupEventHandler);				
 				if(!exec.isTerminated())
 					exec.shutdown();
 				break;
@@ -116,7 +111,31 @@ public class BeepCallServiceListener implements ServletContextListener {
 	/**
 	 * 
 	 */
-	private void addIsupEventHandler() {		
+	private void addIsupEventHandler(ServletContextEvent sce) {		
+		logger.info("Lookup for data Source");
+		ds = lookupForDs();
+		while (ds == null){
+			logger.error("Unable to obtain DB Data Source");
+			try {
+				TimeUnit.MILLISECONDS.sleep(500);
+			} catch (InterruptedException e) {
+				logger.error(e.getMessage());
+				e.printStackTrace();
+			}
+			logger.error("Lookup for data Source");
+			ds = lookupForDs();
+		}
+		logger.info("Initiate dbWorker pool");
+		dbWorker = Executors.newFixedThreadPool(getDbmaxActive());
+		logger.info("Fetch setting from database");
+		FetchSettings ftSt = new FetchSettings(ds);
+		try {
+			appSettings = ftSt.fetchSettings();
+		} catch (SQLException e) {
+			logger.error("No Settings was faound in db. "+ e.getMessage());
+			e.printStackTrace();
+		}
+		
 		logger.info("Check Sigtran Stack Status");
 		int stage = bean.getStage();
 		while (stage!=2){
@@ -143,9 +162,39 @@ public class BeepCallServiceListener implements ServletContextListener {
 		}
 		logger.info("Starting BeepCall Service Listiner");
 		isupEventHandler = new ISUPEventHandler(bean.getStack().getIsup().getStack());
+		logger.info("Set datasource to IsupEventHandler");
+		isupEventHandler.setDs(ds);
+		logger.info("Set dbworker to IsupEventHandler");
+		isupEventHandler.setDbWorker(dbWorker);
+		logger.info("Set isup preference to IsupEventHandler");
+		isupEventHandler.setIsupPreference(appSettings.get("isup"));
+		logger.info("Initiating IsupEventHandler");
 		isupEventHandler.init();
 		
 	}
+	
+	private DataSource lookupForDs(){
+		try {
+			Context initContext = new InitialContext();				
+			return (DataSource) initContext.lookup("java:comp/env/jdbc/BeepCallSig");
+			
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			return null;
+		}
+	}
+	
+	private int getDbmaxActive(){
+		try {						
+			int maxActive = ((org.apache.tomcat.jdbc.pool.DataSource)this.ds).getPoolProperties().getMaxActive();
+			logger.info("DS MaxActive: "+maxActive);
+			return maxActive;			
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			logger.info("DS MaxActive: 10");
+			return 10;
+		}
+	} 
 
 
 }

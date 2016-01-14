@@ -7,13 +7,24 @@
 <h:head>
 </h:head>
 <h:body>
-	<h:form>
+	<h:form>	
 		<p:focus for="terminal" />
 		<p:terminal id="terminal" widgetVar="term"
 			commandHandler="#{terminalEmuBean.handleCommand}"
 			welcomeMessage="Welcome to Unifun SS7 Shell manager, type help for availabel commands" prompt="unifun $" />
-		<p:commandButton type="button" value="Clear" icon="ui-icon-trash"
-			onclick="PF('term').clear()" style="margin-top:10px" />
+		<p:commandButton type="button" value="Clear" icon="ui-icon-trash" id="btn1"
+			onclick="PF('term').clear()" style="margin-top:10px" />			
 	</h:form>
+	<script>
+		var $cont = $('.ui-terminal');	
+		$('.ui-terminal-input').keyup(function(e) {
+		    if (e.keyCode == 13) {		    	
+		       // $cont.scrollTop($cont[0].scrollHeight);	
+		      // $cont.scrollTop($cont.height());
+		       $cont.animate({ scrollTop: $cont.height()}, 200);
+		       //alert($cont[0].scrollHeight);
+		    }
+		});
+	</script>
 </h:body>
 </html>

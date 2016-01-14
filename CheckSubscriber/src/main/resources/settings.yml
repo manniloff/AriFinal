@@ -1,0 +1,40 @@
+sccpAddress: 1
+sccpPc: 6969
+#sccpPc: 6970
+mscAddress: 2
+#mscPc: 5480 # ok
+#mscPc: 5485 # ok
+#mscPc: 6632 # ok  on 1 failed on 2
+#mscPc: 6637 # ok on 2 failed on 1
+#mscPc: 2792 # ok
+#mscPc: 2802 # ok
+mscPc: 8424 # ok 
+#mscPc: 8429 # ok 
+#mscPc: 15220
+ssnO: 8
+ssnD: 6
+sc: 923330005258
+#sc: 923330005259
+typeOfNumber: InternationalNumber
+numberingPlanIdentification: ISDNTelephoneNumberingPlan
+addressNature: international_number
+numberingPlan: ISDN
+routingIndicator: ROUTING_BASED_ON_GLOBAL_TITLE
+globalTitleMsc: 
+  type: GT0100
+  translationType: 0
+  numberingPlan: ISDN_TELEPHONY
+  natureOfAddress: INTERNATIONAL
+  digits: 923330052027
+globalTitleHlr: 
+  type: GT0100
+  translationType: 0
+  numberingPlan: ISDN_TELEPHONY # LAND_MOBILE 
+  natureOfAddress: INTERNATIONAL
+  #digits: 923330052027
+  #digits: 923330043027
+  digits: 923330066027
+  #digits: 923330002124
+  #digits: 410034111111111
+threads: 500
+alerturl: "http://localhost:8080/BeepCall/alert.php"
