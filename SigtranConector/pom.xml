@@ -16,6 +16,8 @@
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
 		<mobicents.jss7>2.1.0.FINAL</mobicents.jss7>
+	<!--  	<mobicents.sctp>1.6.0.FINAL</mobicents.sctp> -->
+		<mobicents.sctp>1.7.0-SNAPSHOT</mobicents.sctp>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -27,7 +29,7 @@
 		<dependency>
 			<groupId>org.mobicents.protocols.sctp</groupId>
 			<artifactId>sctp-impl</artifactId>
-			<version>1.6.0.FINAL</version>
+			<version>${mobicents.sctp}</version>
 			<type>jar</type>
 			<scope>provided</scope>
 		</dependency>

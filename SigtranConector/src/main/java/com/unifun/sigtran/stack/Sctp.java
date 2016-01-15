@@ -3,7 +3,9 @@
  */
 package com.unifun.sigtran.stack;
 
+import org.mobicents.protocols.api.Management;
 import org.mobicents.protocols.sctp.ManagementImpl;
+import org.mobicents.protocols.sctp.netty.NettySctpManagementImpl;
 import org.mobicents.protocols.ss7.m3ua.impl.oam.SCTPShellExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +16,7 @@ import org.slf4j.LoggerFactory;
  */
 public class Sctp {
 	private static final Logger logger = LoggerFactory.getLogger(String.format("%1$-15s] ", "[Sctp"));	
-	private ManagementImpl sctpManagement;
+	private Management sctpManagement;
 	private SCTPShellExecutor sctpShellExecuter = new SCTPShellExecutor();
 	private int workerThreads = 1;
 	private String configPath =  null;
@@ -28,7 +30,8 @@ public class Sctp {
 	public void initSCTP() {
 		logger.debug("[SCTP] Initializing SCTP Stack....");
 			try {
-				this.sctpManagement = new ManagementImpl("Unifun");
+				//this.sctpManagement = new ManagementImpl("Unifun");
+				this.sctpManagement = new NettySctpManagementImpl("Unifun");
 				this.sctpManagement.setSingleThread(false);
 				this.sctpManagement.setWorkerThreads(this.workerThreads);
 				this.sctpManagement.setPersistDir(this.configPath);
@@ -74,22 +77,17 @@ public class Sctp {
 		logger.debug("Stopped SCTP Stack ....");
 	}
 
-	/**
-	 * @return the sctpManagement
-	 */
-	public ManagementImpl getSctpManagement() {
+	public Management getSctpManagement() {
 		return sctpManagement;
 	}
 
-	/**
-	 * @param sctpManagement the sctpManagement to set
-	 */
-	public void setSctpManagement(ManagementImpl sctpManagement) {
+	public void setSctpManagement(Management sctpManagement) {
 		this.sctpManagement = sctpManagement;
 	}
 
 	public SCTPShellExecutor getSctpShellExecuter() {
 		return sctpShellExecuter;
 	}
+
 
 }
