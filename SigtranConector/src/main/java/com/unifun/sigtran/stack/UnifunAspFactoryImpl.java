@@ -15,6 +15,8 @@ import org.mobicents.protocols.ss7.m3ua.message.M3UAMessage;
 import org.mobicents.protocols.ss7.m3ua.message.MessageClass;
 import org.mobicents.protocols.ss7.m3ua.message.MessageType;
 import org.mobicents.protocols.ss7.m3ua.message.transfer.PayloadData;
+import org.mobicents.protocols.ss7.m3ua.parameter.ProtocolData;
+import org.mobicents.protocols.ss7.mtp.Mtp3TransferPrimitive;
 
 /**
  * @author rbabin
@@ -54,8 +56,7 @@ public class UnifunAspFactoryImpl extends AspFactoryImpl{
 		super(aspName,maxSequenceNumber,aspid,isHeartBeatEnabled);	
 		txBuffer.clear();
         txBuffer.rewind();
-        txBuffer.flip();
-        
+        txBuffer.flip();        
         this.slsTable = new int[maxSequenceNumber];
 
 	}
@@ -68,116 +69,43 @@ public class UnifunAspFactoryImpl extends AspFactoryImpl{
         return ASP_ID_COUNT;
     }
 	
+	@Override
 	protected void setAssociation(Association association) {
-        // Unset the listener to previous association
-        if (this.association != null) {
-            this.association.setAssociationListener(null);
-        }
-        this.association = association;
-        this.associationName = this.association.getName();
-        // Set the listener for new association
-        this.association.setAssociationListener(this);
+		super.setAssociation(association);
     }
 	
+	@Override
 	protected void setTransportManagement(Management transportManagement) {
-        this.transportManagement = transportManagement;
+        super.setTransportManagement(transportManagement);
     }
 
 	@Override
 	protected void read(M3UAMessage message) {
 		logger.debug(" Read from extended class");		
-		try {
-			logger.debug(localAssoc.getName() + " - " + forwardAssoc.getName());
-		} catch (Exception e) {
-			logger.debug("Error: "+ e.getMessage());
-		}
-		
-		//write to forward interface if it is transfer message
 		switch(message.getMessageClass()){
 		case MessageClass.TRANSFER_MESSAGES:
-		if (forwardAssoc!=null && localAssoc != null){
-			logger.debug(" Forward mode is " + enableForward);
-			if(enableForward){
-				//handle forwarded traffic
-				if (forwardAssoc.getName().equals(this.association.getName())){
-					// Write to association from where initial traffic was received
-					localWrite(message);
-				}else{
-					//write to forward interface
-					fwdWrite(message);
-				}
-			}else {
-				super.read(message);
+			if (forwardAssoc!=null && localAssoc != null){
+				logger.debug(" Forward mode is " + enableForward);
+				if(enableForward){
+					//handle forwarded traffic
+					if (forwardAssoc.getName().equals(this.association.getName())){
+						// Write to association from where initial traffic was received
+						//localWrite(message);
+						fwWrite(message, localAssoc);
+					}else{
+						//write to forward interface
+						fwWrite(message, forwardAssoc);
+					}
+					break;
+				}			
 			}
-			break;
-		}
 		default: 
 			super.read(message);
 			break;
-	}
-	}
-	
-	private void fwdWrite(M3UAMessage message){
-		logger.debug(" fwdWrite");
-		switch (message.getMessageType()){
-		case MessageType.PAYLOAD:
-			try {
-				PayloadData payload = (PayloadData) message;
-				logger.debug(String.format("RoutingContext: %s, ", payload.getRoutingContext()));
-				org.mobicents.protocols.api.PayloadData payloadData = null;
-				int seqControl = payload.getData().getSLS();
-				payloadData = new org.mobicents.protocols.api.PayloadData(payload.getData().getData().length, 
-						payload.getData().getData(), true, false,
-                    SCTP_PAYLOAD_PROT_ID_M3UA, this.slsTable[seqControl]);
-              this.forwardAssoc.send(payloadData);
-			} catch (Exception e) {
-				logger.error(e.getMessage());
-			}
-			break;
-			default:
-				logger.error(String.format("Rx : Transfer message with invalid MessageType=%d message=%s",
-                        message.getMessageType(), message));
-                break;
 		}
-//		synchronized (txBuffer) {
-//            try {
-//                txBuffer.clear();
-//                ((M3UAMessageImpl) message).encode(txBuffer);
-//                txBuffer.flip();
-//
-//                byte[] data = new byte[txBuffer.limit()];
-//                txBuffer.get(data);
-//
-//                org.mobicents.protocols.api.PayloadData payloadData = null;
-//
-//                switch (message.getMessageClass()) {
-//                    case MessageClass.ASP_STATE_MAINTENANCE:
-//                    case MessageClass.MANAGEMENT:
-//                    case MessageClass.ROUTING_KEY_MANAGEMENT:
-//                        payloadData = new org.mobicents.protocols.api.PayloadData(data.length, data, true, true,
-//                                SCTP_PAYLOAD_PROT_ID_M3UA, 0);
-//                        break;
-//                    case MessageClass.TRANSFER_MESSAGES:
-//                        PayloadData payload = (PayloadData) message;
-//                        int seqControl = payload.getData().getSLS();
-//                        payloadData = new org.mobicents.protocols.api.PayloadData(data.length, data, true, false,
-//                                SCTP_PAYLOAD_PROT_ID_M3UA, this.slsTable[seqControl]);
-//                        break;
-//                    default:
-//                        payloadData = new org.mobicents.protocols.api.PayloadData(data.length, data, true, true,
-//                                SCTP_PAYLOAD_PROT_ID_M3UA, 0);
-//                        break;
-//                }
-//                logger.debug(String.format("Message Class: %d, ", message.getMessageClass()));
-//                this.forwardAssoc.send(payloadData);
-//            } catch (Exception e) {
-//                logger.error(String.format("Error while trying to send PayloadData to SCTP layer. M3UAMessage=%s", message));
-//            }
-//        }
 	}
 	
-	private void localWrite(M3UAMessage message){
-		logger.debug(" localWrite");
+	private void fwWrite(M3UAMessage message, Association assoc){		
 		synchronized (txBuffer) {
             try {
                 txBuffer.clear();
@@ -197,7 +125,7 @@ public class UnifunAspFactoryImpl extends AspFactoryImpl{
                                 SCTP_PAYLOAD_PROT_ID_M3UA, 0);
                         break;
                     case MessageClass.TRANSFER_MESSAGES:
-                        PayloadData payload = (PayloadData) message;
+                        PayloadData payload = (PayloadData) message;                        
                         int seqControl = payload.getData().getSLS();
                         payloadData = new org.mobicents.protocols.api.PayloadData(data.length, data, true, false,
                                 SCTP_PAYLOAD_PROT_ID_M3UA, this.slsTable[seqControl]);
@@ -207,18 +135,12 @@ public class UnifunAspFactoryImpl extends AspFactoryImpl{
                                 SCTP_PAYLOAD_PROT_ID_M3UA, 0);
                         break;
                 }
-
-                this.localAssoc.send(payloadData);
+                logger.debug(String.format("Message Class: %d, ", message.getMessageClass()));
+                assoc.send(payloadData);
             } catch (Exception e) {
                 logger.error(String.format("Error while trying to send PayloadData to SCTP layer. M3UAMessage=%s", message));
             }
         }
-	}
-
-	@Override
-	protected void write(M3UAMessage message) {
-		logger.info(" Write from extended class");
-		super.write(message);
 	}
 
 	protected void setEnableForward(boolean enableForward) {
@@ -229,7 +151,9 @@ public class UnifunAspFactoryImpl extends AspFactoryImpl{
 		this.forwardAssoc = forwardAssoc;
 	}
 
+	@Override
 	protected void createSLSTable(int minimumBoundStream) {
+		super.createSLSTable(minimumBoundStream);
         if (minimumBoundStream == 0) { // special case - only 1 stream
             for (int i = 0; i < this.maxSequenceNumber; i++) {
                 slsTable[i] = 0;
@@ -256,5 +180,27 @@ public class UnifunAspFactoryImpl extends AspFactoryImpl{
 	}
 	
 	
+	@Override
+	public void onPayload(Association association, org.mobicents.protocols.api.PayloadData payloadData) {
+		logger.debug(payloadData.getData());
+		if (forwardAssoc!=null && localAssoc != null){
+			if(enableForward){				
+				Mtp3TransferPrimitive localMtp3TransferPrimitive = super.getM3UAManagement().
+						 getMtp3TransferPrimitiveFactory().createMtp3TransferPrimitive(payloadData.getData());
+				try{
+					if (forwardAssoc.getName().equals(this.association.getName())){
+						this.localAssoc.send(payloadData);
+					}else{
+						//Forward message						
+						this.forwardAssoc.send(payloadData);
+					}
+				} catch (Exception e) {
 
+				}
+				
+				return;
+			}			
+		}
+		super.onPayload(association, payloadData);
+	}
 }
