@@ -11,7 +11,7 @@ import com.unifun.sigtran.stack.Isup;
  * @author <a href="mailto:romanbabin@gmail.com">Roman Babin </a>
  *
  */
-public class ISUPShellExecutor {
+public class ISUPShellExecutor {	
 	private Isup isupInstance;
 	private CircuitManagerImpl circuitManager;
 	
@@ -20,6 +20,7 @@ public class ISUPShellExecutor {
 	 */
 	public ISUPShellExecutor(Isup isupInstance) {
 		this.isupInstance = isupInstance;
+		circuitManager = new CircuitManagerImpl();
 	}
 
 	/**
@@ -57,13 +58,13 @@ public class ISUPShellExecutor {
 	}
 	
 	/**
-	 * isup addgroupofcircuit <start cic nb. - end cic nb.> <dpc>
+	 * isup addgroupofcircuit <start cic nb. - end cic nb.> <dpc> <skip 0,32,...N+32 channels>
 	 * @param args
 	 * @return
 	 */
 	private String addGroupOfCircuit(String[] args){
-		if (args.length < 4){
-			return "Invalid Command";
+		if (args.length > 5){
+			return "Invalid Command" + args.length;
 		}
 		String[] cics = args[2].split("-");
 		if (cics.length<2){
@@ -72,11 +73,26 @@ public class ISUPShellExecutor {
 		int startCic = Integer.parseInt(cics[0]);
 		int endCic = Integer.parseInt(cics[1]);
 		int dpc = Integer.parseInt(args[3]);
-		for (int i=startCic; i<=endCic; i++){
-			circuitManager.addCircuit(i, dpc);
+		boolean skip = false;
+		if (args.length >= 5){
+			if("true".equalsIgnoreCase(args[4]))
+				skip = true;
+		}
+		try{
+		for (int i=startCic; i<=endCic; i++){			
+			if (skip){
+				if ((i%32) != 0){
+					circuitManager.addCircuit(i, dpc);					
+				}
+			}
+			else {				
+				circuitManager.addCircuit(i, dpc);				
+			}
 		}		
-		return String.format("cics from %d to %d dpc: %d was added to Circuit Manager", startCic, endCic, dpc);
-		
+		return String.format("cics from %d to %d dpc: %d was added to Circuit Manager. Skip: %s", startCic, endCic, dpc, skip);
+		}catch(Exception e){
+			return String.format("Some error ocure while addings cics from %d to %d dpc: %d Skip: %s Error: %s", startCic, endCic, dpc, skip, e.getMessage());
+			}
 	}
 	
 	/**
@@ -134,7 +150,7 @@ public class ISUPShellExecutor {
 	 * @return
 	 */
 	private String executeISUP(String[] args) {
-		if (args.length < 2 || args.length > 4) {
+		if (args.length < 2) {
             return "Invalid Command";
         }
 

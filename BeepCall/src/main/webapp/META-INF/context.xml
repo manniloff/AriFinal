@@ -8,7 +8,7 @@
 		password="beepcallsig"
 		url="jdbc:mysql://127.0.0.1:3306/BeepCallSig?noAccessToProcedureBodies=true"
 		factory="org.apache.tomcat.jdbc.pool.DataSourceFactory"
-		jdbcInterceptors="org.apache.tomcat.jdbc.pool.interceptor.ConnectionState;org.apache.tomcat.jdbc.pool.interceptor.StatementFinalizer"
+		jdbcInterceptors="org.apache.tomcat.jdbc.pool.interceptor.ConnectionState;org.apache.tomcat.jdbc.pool.interceptor.StatementFinalizer;org.apache.tomcat.jdbc.pool.interceptor.ResetAbandonedTimer"
 		initialSize="3"
 		maxActive="500"
 		maxWait="10000"

@@ -121,8 +121,8 @@ public class ISUPEventHandler implements ISUPListener {
 		logger.info("ISUP Listiner addet to ISUP provider");
 		logger.info("Initiate Isupe Event Persistence");
 		//eventPersistence = new IsupEventPersistence();
-		logger.info("Send RSC for each circuit");
-		resetAllChannels();
+		//logger.info("Send RSC for each circuit");
+		//resetAllChannels();
 		//Send GRS
 		//groupResetAllChannels();
 	}
@@ -130,10 +130,14 @@ public class ISUPEventHandler implements ISUPListener {
 	private void allocateChannels(){
 		long[] circuitIds = this.stack.getCircuitManager().getChannelIDs();
 		for (long circuitId : circuitIds) {
+			try{
 			int cic = this.stack.getCircuitManager().getCIC(circuitId);
 			int dpc = this.stack.getCircuitManager().getDPC(circuitId);
 			this.cicMgm.addChannel(cic, dpc,circuitId);
 			logger.info(String.format("Channel with cic: %d and dpc: %d added to CircuitManager", cic, dpc));
+			}catch(Exception e){
+				logger.warn("Some error ocure while allocating channels "+e.getMessage());
+			}
 		}
 	}
 	
@@ -153,7 +157,7 @@ public class ISUPEventHandler implements ISUPListener {
 			try{
 				onANM(event);
 			}catch(Exception e){
-				logger.warn("Unable to handel onANM event: [%s]", e.getMessage());
+				logger.warn(String.format("Unable to handel onANM event: [ %s ]", e.getMessage()));
 				e.printStackTrace();
 			}
 			break;
@@ -165,7 +169,7 @@ public class ISUPEventHandler implements ISUPListener {
 			try {
 				onACM(event);
 			} catch (Exception e) {
-				logger.warn("Unable to handel onACM event: [%s]", e.getMessage());
+				logger.warn(String.format("Unable to handel onACM event: [ %s ]", e.getMessage()));
 				e.printStackTrace();
 			}
 			break;
@@ -180,7 +184,7 @@ public class ISUPEventHandler implements ISUPListener {
 			try {
 				onCPG(event);
 			} catch (Exception e) {
-				logger.warn("Unable to handel onCPG event: [%s]", e.getMessage());
+				logger.warn(String.format("Unable to handel onCPG event: [ %s ]", e.getMessage()));
 				e.printStackTrace();
 			}
 			break;
@@ -201,9 +205,21 @@ public class ISUPEventHandler implements ISUPListener {
 			break;
 		case CircuitGroupResetMessage.MESSAGE_CODE:
 			eventName = "CIRCUIT_GROUP_RESET";
+			try {
+				onGRS(event);
+			} catch (Exception e) {
+				logger.warn(String.format("Unable to handel onGRS event: " + e.getMessage()));
+				e.printStackTrace();
+			}
 			break;
 		case CircuitGroupResetAckMessage.MESSAGE_CODE:
 			eventName = "CIRCUIT_GROUP_RESET_ACK";
+			try {
+				onGRA(event);
+			} catch (Exception e) {
+				logger.warn(String.format("Unable to handel onGRA event: [ %s ]", e.getMessage()));
+				e.printStackTrace();
+			}
 			break;
 		case CircuitGroupUnblockingMessage.MESSAGE_CODE:
 			eventName = "CIRCUIT_GROUP_UNBLOCKING";
@@ -242,7 +258,7 @@ public class ISUPEventHandler implements ISUPListener {
 			try {
 				onIAM(event);
 			} catch (Exception e) {
-				logger.warn("Unable to handel onIAM event: [%s]", e.getMessage());
+				logger.warn(String.format("Unable to handel onIAM event: [ %s ]", e.getMessage()));
 				e.printStackTrace();
 			}
 			break;
@@ -269,7 +285,7 @@ public class ISUPEventHandler implements ISUPListener {
 			try{
 				onRLC(event);
 			}catch(Exception e){
-				logger.warn(String.format("Unable to handle RLC [%s] ",e.getMessage()));
+				logger.warn(String.format(String.format("Unable to handle RLC [ %s ] ",e.getMessage())));
 			}
 			break;
 		case ReleaseMessage.MESSAGE_CODE:
@@ -277,7 +293,7 @@ public class ISUPEventHandler implements ISUPListener {
 			try {
 				onREL(event);
 			} catch (Exception e) {
-				logger.warn(String.format("Unable to handle incommning REL [%s] ",e.getMessage()));
+				logger.warn(String.format(String.format("Unable to handle incommning REL [ %s ] ",e.getMessage())));
 				e.printStackTrace();
 			}
 			break;
@@ -286,7 +302,7 @@ public class ISUPEventHandler implements ISUPListener {
 			try {
 				onRSC(event);
 			} catch (Exception e) {
-				logger.warn(String.format("Unable to handle incommning RCM [%s] ",e.getMessage()));
+				logger.warn(String.format(String.format("Unable to handle incommning RCM [ %s ] ",e.getMessage())));
 				e.printStackTrace();
 			}
 			break;
@@ -310,7 +326,7 @@ public class ISUPEventHandler implements ISUPListener {
 			try {
 				onUBA(event);
 			} catch (Exception e) {
-				logger.warn(String.format("Unable to handle incommning UBA [%s] ",e.getMessage()));
+				logger.warn(String.format(String.format("Unable to handle incommning UBA [ %s ] ",e.getMessage())));
 				e.printStackTrace();
 			}
 			break;
@@ -334,8 +350,75 @@ public class ISUPEventHandler implements ISUPListener {
 		
 	}
 
+	/**
+	 * @param event
+	 */
+	private void onGRA(ISUPEvent event) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/**
+	 * @param event
+	 */
+	private void onGRS(ISUPEvent event) {
+		logger.debug("onGRS " + event.getMessage());
+		int dpc = event.getDpc();
+		int cic = event.getMessage().getCircuitIdentificationCode().getCIC();
+		long channelId = this.stack.getCircuitManager().getChannelID(cic, dpc);		
+		CircuitGroupResetMessage grs = (CircuitGroupResetMessage)event.getMessage();
+		RangeAndStatus rangeAndStatus = null;
+		try{
+			rangeAndStatus = grs.getRangeAndStatus();
+		}catch(Exception e){
+			logger.warn("Range and status parameter missing. "+ e.getMessage());
+		}		
+		sendGRA(cic, dpc, channelId, rangeAndStatus);
+	}
+	
+	public void sendGRA(int cic, int dpc, long channelId, RangeAndStatus rangeAndStatus){	
+		logger.debug(String.format("sendGRA cic: %d, dpc: %d", cic,dpc));
+		CircuitGroupResetAckMessage msg = this.provider.getMessageFactory().createGRA(cic);
+		msg.setSls(cic);
+		RangeAndStatus rAnds = this.provider.getParameterFactory().createRangeAndStatus();
+		byte range = (byte)0x01;
+		byte[] status ;
+		try{
+			range = rangeAndStatus.getRange();
+			//status = ra
+		}catch(Exception e){
+			logger.warn("Range or status missing. "+e.getMessage());
+			e.printStackTrace();
+		}
+		int len = (range + 1) / 8;
+        if ((range + 1) % 8 != 0) {
+            len++;
+        }
+        status = new byte[len];
+        for (int i = 0; i<len; i++){
+        	status[i] = (byte)0x00;
+        }
+		int rangeVal = range & 0xff;
+		//status = {(byte)0x00};
+		int endCic = cic + rangeVal;
+		rAnds.setRange(range);
+		rAnds.setStatus(status);
+		msg.setRangeAndStatus(rAnds);
+		try{
+			this.provider.sendMessage(msg, dpc);
+			logger.debug(String.format("GRA Sended to startcic: %d, endcic: %d ", cic, endCic ));
+			//set CIC to IDLE
+			for (int i = cic; i<= endCic; i++){
+				logger.debug(String.format("Set channel to idle cic: %d, dpc: %d ", i, dpc ));
+				cicMgm.setIdle(this.stack.getCircuitManager().getChannelID(i, dpc));
+			}
+		}catch(Exception e){
+			logger.error(e.getMessage());
+		}
+	}
+
 	private void onANM(ISUPEvent event) throws Exception {
-		logger.debug("onANM" + event.getMessage());
+		logger.debug("onANM " + event.getMessage());
 		int dpc = event.getDpc();
 		int cic = event.getMessage().getCircuitIdentificationCode().getCIC();
 		long channelId = this.stack.getCircuitManager().getChannelID(cic, dpc);

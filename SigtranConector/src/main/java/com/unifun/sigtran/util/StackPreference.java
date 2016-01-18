@@ -29,7 +29,7 @@ import com.unifun.sigtran.util.oam.TCAPShellExecutor;
  */
 public class StackPreference {
 
-    private static final Logger logger = LoggerFactory.getLogger(String.format("%1$-15s] ", "[SctpServer"));
+    private static final Logger logger = LoggerFactory.getLogger(String.format("%1$-15s] ", "[StackPreference"));
     private Sctp sctp;
     private M3UA m3ua;
     private Sccp sccp;

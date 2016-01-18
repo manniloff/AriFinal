@@ -53,12 +53,10 @@ public class Isup {
             
             this.stack = new ISUPStackImpl(scheduler, localSpc, ni);            
             this.stack.setMtp3UserPart(clientM3UAMgmt);
-            this.provider = this.stack.getIsupProvider();
-            CircuitManagerImpl cm = new CircuitManagerImpl();
-            this.isupShellExecutor.setCircuitManager(cm);
-            
+            this.provider = this.stack.getIsupProvider();            
 		} catch (Exception e) {
-			// TODO: handle exception
+			e.printStackTrace();
+			logger.error(e.getMessage());
 		}
     }
 
