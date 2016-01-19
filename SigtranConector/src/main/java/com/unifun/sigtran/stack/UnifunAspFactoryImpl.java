@@ -9,14 +9,10 @@ import org.apache.log4j.Logger;
 import org.mobicents.protocols.api.Association;
 import org.mobicents.protocols.api.Management;
 import org.mobicents.protocols.ss7.m3ua.impl.AspFactoryImpl;
-import org.mobicents.protocols.ss7.m3ua.impl.M3UAManagementImpl;
 import org.mobicents.protocols.ss7.m3ua.impl.message.M3UAMessageImpl;
 import org.mobicents.protocols.ss7.m3ua.message.M3UAMessage;
 import org.mobicents.protocols.ss7.m3ua.message.MessageClass;
-import org.mobicents.protocols.ss7.m3ua.message.MessageType;
 import org.mobicents.protocols.ss7.m3ua.message.transfer.PayloadData;
-import org.mobicents.protocols.ss7.m3ua.parameter.ProtocolData;
-import org.mobicents.protocols.ss7.mtp.Mtp3TransferPrimitive;
 
 /**
  * @author rbabin
@@ -80,13 +76,11 @@ public class UnifunAspFactoryImpl extends AspFactoryImpl{
     }
 
 	@Override
-	protected void read(M3UAMessage message) {
-		logger.debug(" Read from extended class");		
+	protected void read(M3UAMessage message) {			
 		switch(message.getMessageClass()){
-		case MessageClass.TRANSFER_MESSAGES:
+		case MessageClass.TRANSFER_MESSAGES:			
 			if (forwardAssoc!=null && localAssoc != null){
-				logger.debug(" Forward mode is " + enableForward);
-				if(enableForward){
+				if(forwardAssoc.isUp() && enableForward){									
 					//handle forwarded traffic
 					if (forwardAssoc.getName().equals(this.association.getName())){
 						// Write to association from where initial traffic was received
@@ -97,7 +91,10 @@ public class UnifunAspFactoryImpl extends AspFactoryImpl{
 						fwWrite(message, forwardAssoc);
 					}
 					break;
-				}			
+
+				}
+				if(!forwardAssoc.isUp())
+					logger.info(String.format("Association: %s is down, unable to forward message", forwardAssoc.getName()));
 			}
 		default: 
 			super.read(message);
@@ -180,27 +177,27 @@ public class UnifunAspFactoryImpl extends AspFactoryImpl{
 	}
 	
 	
-	@Override
-	public void onPayload(Association association, org.mobicents.protocols.api.PayloadData payloadData) {
-		logger.debug(payloadData.getData());
-		if (forwardAssoc!=null && localAssoc != null){
-			if(enableForward){				
-				Mtp3TransferPrimitive localMtp3TransferPrimitive = super.getM3UAManagement().
-						 getMtp3TransferPrimitiveFactory().createMtp3TransferPrimitive(payloadData.getData());
-				try{
-					if (forwardAssoc.getName().equals(this.association.getName())){
-						this.localAssoc.send(payloadData);
-					}else{
-						//Forward message						
-						this.forwardAssoc.send(payloadData);
-					}
-				} catch (Exception e) {
-
-				}
-				
-				return;
-			}			
-		}
-		super.onPayload(association, payloadData);
-	}
+//	@Override
+//	public void onPayload(Association association, org.mobicents.protocols.api.PayloadData payloadData) {
+//		logger.debug(payloadData.getData());
+//		if (forwardAssoc!=null && localAssoc != null){
+//			if(enableForward){				
+//				Mtp3TransferPrimitive localMtp3TransferPrimitive = super.getM3UAManagement().
+//						 getMtp3TransferPrimitiveFactory().createMtp3TransferPrimitive(payloadData.getData());
+//				try{
+//					if (forwardAssoc.getName().equals(this.association.getName())){
+//						this.localAssoc.send(payloadData);
+//					}else{
+//						//Forward message						
+//						this.forwardAssoc.send(payloadData);
+//					}
+//				} catch (Exception e) {
+//
+//				}
+//				
+//				return;
+//			}			
+//		}
+//		super.onPayload(association, payloadData);
+//	}
 }
