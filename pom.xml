@@ -16,6 +16,7 @@
 		<module>BeepCall</module>
 		<module>CheckSubscriber</module>
 		<module>CapLayer</module>
+		<module>UssdGate</module>
 	</modules>
 
 	<profiles>

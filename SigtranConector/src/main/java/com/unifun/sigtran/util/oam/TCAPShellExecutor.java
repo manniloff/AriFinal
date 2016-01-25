@@ -3,7 +3,7 @@
  */
 package com.unifun.sigtran.util.oam;
 
-import org.mobicents.protocols.ss7.sccp.impl.SccpStackImpl;
+import org.mobicents.protocols.ss7.sccp.SccpStack;
 import org.mobicents.protocols.ss7.tcap.TCAPStackImpl;
 import org.mobicents.protocols.ss7.tcap.api.TCAPStack;
 
@@ -16,7 +16,7 @@ import com.unifun.sigtran.stack.Tcap;
 public class TCAPShellExecutor {
 
 	private TCAPStack tcapStack;	
-	private SccpStackImpl sccpStack;
+	private SccpStack sccpStack;
 	private Tcap tcap;
 	/**
 	 * @param tcap

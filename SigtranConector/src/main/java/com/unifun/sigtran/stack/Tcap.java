@@ -1,5 +1,6 @@
 package com.unifun.sigtran.stack;
 
+import org.mobicents.protocols.ss7.sccp.SccpStack;
 import org.mobicents.protocols.ss7.sccp.impl.SccpStackImpl;
 import org.mobicents.protocols.ss7.tcap.api.TCAPStack;
 import org.slf4j.Logger;
@@ -11,10 +12,10 @@ public class Tcap {
 	private static final Logger logger = LoggerFactory.getLogger(String.format("%1$-15s] ", "[TCAP"));		
 	
 	private TCAPStack tcapStack;	
-	private SccpStackImpl sccpStack;
+	private SccpStack sccpStack;
 	private TCAPShellExecutor tcapShellExecutor;
 	
-	public Tcap(SccpStackImpl sccpStack){		
+	public Tcap(SccpStack sccpStack){		
 		this.sccpStack = sccpStack;
 	}
 
@@ -32,7 +33,7 @@ public class Tcap {
 	public TCAPShellExecutor getTcapShellExecutor() {
 		return tcapShellExecutor;
 	}
-	public SccpStackImpl getSccpStack() {
+	public SccpStack getSccpStack() {
 		return sccpStack;
 	}
 	public void setTcapStack(TCAPStack tcapStack) {
