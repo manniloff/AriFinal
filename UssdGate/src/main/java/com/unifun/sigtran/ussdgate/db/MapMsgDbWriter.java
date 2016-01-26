@@ -80,7 +80,10 @@ public class MapMsgDbWriter implements Runnable {
 				cStatement.setLong(11, ussMessage.getInitialDialogId());
 			else
 				cStatement.setNull(11, java.sql.Types.BIGINT);
-			cStatement.setString(12, ussMessage.getServiceCode());
+			if(ussMessage.getServiceCode()!=null)
+				cStatement.setString(12, ussMessage.getServiceCode());
+			else
+				cStatement.setNull(12, java.sql.Types.VARCHAR);
 			cStatement.execute();
 		} catch (SQLException e) {
 			logger.error("storeError:SQLException: " + e.getMessage() + " errCode=" + e.getErrorCode());

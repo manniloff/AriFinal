@@ -89,7 +89,7 @@ public class UssdGateServletListener implements ServletContextListener {
 					bean = (SigtranStackBean) initContext.lookup("java:comp/env/bean/SigtranObjectFactory");
 					sce.getServletContext().setAttribute("sigtranStack", bean);
 				} catch (NamingException e) {
-					logger.error("Unable to initiate Beepcall context. \n"+e);
+					logger.error("Unable to initiate UssdGate context. \n"+e);
 					logger.error("Retraing to lookup after 10 seconds");	
 					e.printStackTrace();
 					contextloop = true;

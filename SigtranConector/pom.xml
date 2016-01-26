@@ -15,8 +15,9 @@
 		<endorsed.dir>${project.build.directory}/endorsed</endorsed.dir>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
-		<mobicents.jss7>2.1.0.FINAL</mobicents.jss7>
+<!-- 		<mobicents.jss7>2.1.0.FINAL</mobicents.jss7> -->
 	<!--  	<mobicents.sctp>1.6.0.FINAL</mobicents.sctp> -->
+		<mobicents.jss7>3.0.0-SNAPSHOT</mobicents.jss7>
 		<mobicents.sctp>1.7.0-SNAPSHOT</mobicents.sctp>
 	</properties>
 	<dependencies>

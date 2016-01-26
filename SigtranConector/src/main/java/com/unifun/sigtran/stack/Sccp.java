@@ -3,8 +3,11 @@
  */
 package com.unifun.sigtran.stack;
 
+import java.util.Map;
+
 import org.mobicents.protocols.ss7.m3ua.impl.M3UAManagementImpl;
 import org.mobicents.protocols.ss7.sccp.SccpStack;
+import org.mobicents.protocols.ss7.sccp.impl.SccpStackImpl;
 import org.mobicents.protocols.ss7.sccp.impl.oam.SccpExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +52,7 @@ public class Sccp {
             this.sccpStack.start();
             this.sccpStack.removeAllResourses();
             this.sccpShellExecuter = new SccpExecutor();
-            this.sccpShellExecuter.setSccpStack(sccpStack);
+            this.sccpShellExecuter.setSccpStacks(sccpStack);
             return true;
         } catch (Exception ex) {
             logger.error(ex.getMessage());

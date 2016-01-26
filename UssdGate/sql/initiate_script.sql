@@ -25,7 +25,7 @@ CREATE TABLE `ss_map_message_log` (
   `dialog_id` bigint(20) NOT NULL,
   `msisdn` bigint NOT NULL,
   `ussd_text` varchar(255) DEFAULT NULL,
-  `service_code` varchar(50)  NOT NULL,
+  `service_code` varchar(50),
   `message_type` enum('processUnstructuredSSRequest_Request', 'processUnstructuredSSRequest_Response', 'unstructuredSSRequest_Request', 'unstructuredSSRequest_Response', 'unstructuredSSNotify_Request', 'unstructuredSSNotify_Response','UnstructuredSSResponse') DEFAULT NULL,
   `source` enum('http','map','app') DEFAULT NULL,
   `initial_dialog_id` bigint(20) DEFAULT NULL,

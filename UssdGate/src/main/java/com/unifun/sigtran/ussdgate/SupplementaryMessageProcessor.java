@@ -189,7 +189,6 @@ public class SupplementaryMessageProcessor implements Runnable{
 		else
 			routeRule = ussMsg.getRouteRule();
 		if(routeRule==null){
-			logger.error(String.format(""));
 			ussMsg.setCharset("15");
 			ussMsg.setMessageType(MAPMessageType.processUnstructuredSSRequest_Response.name());
 			ussMsg.setInTimeStamp(null);
@@ -500,7 +499,7 @@ public class SupplementaryMessageProcessor implements Runnable{
 			URLDecoder.decode(respDialogId, "UTF-8");
 			URLDecoder.decode(respMsisdn, "UTF-8"); 
 			URLDecoder.decode(respServiceCode, "UTF-8"); 
-		}catch (UnsupportedEncodingException e) {
+		}catch (Exception e) {
 			logger.warn("Some error ocure while decoding http response parameters from headers: "+e.getMessage());
 			ussMsg.setUssdText("Some error ocure during information exchange, please try again later");
 			ussMsg.setInTimeStamp(null);

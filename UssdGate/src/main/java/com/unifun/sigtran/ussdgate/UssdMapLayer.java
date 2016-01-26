@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -88,7 +89,8 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 	private Set<Long> httpdialogs = new HashSet<>();
 	private DataSource ds;
 	private ExecutorService dbWorker;
-	private ExecutorService appWorker;
+	//private ExecutorService appWorker;
+	private ForkJoinPool appWorker;
 	private Map<String, Map<String,String>> appSettings = null;
 	private transient Map<Long, UssMessage> ussMessages = new HashMap<>();
 	
@@ -118,7 +120,8 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 		this.mapProvider.addMAPDialogListener(this);
 		this.mapProvider.getMAPServiceSupplementary().addMAPServiceListener(this);
 		this.mapProvider.getMAPServiceSupplementary().acivate(); 
-		appWorker = Executors.newFixedThreadPool(Integer.parseInt(this.appSettings.get("app").get("threads")), new UssdgateThreadFactory("MapLayer"));
+		//appWorker = Executors.newFixedThreadPool(Integer.parseInt(this.appSettings.get("app").get("threads")), new UssdgateThreadFactory("MapLayer"));
+		appWorker = new ForkJoinPool(Integer.parseInt(this.appSettings.get("app").get("threads")));
 		//Load routing rules from db
 		fetchRoutingRule(false);
 		fetchRoutingRule(true);
@@ -212,10 +215,22 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 	public void handleUssProcReq(UssMessage response){
 		logger.debug("Prepare to send response:"+response.toString());
 		try {
-			int charset = Integer.parseInt(response.getCharset());
-			if ((!"15".equalsIgnoreCase(response.getCharset())) || (!"72".equalsIgnoreCase(response.getCharset()))){
-				logger.error("Unsuported charset code: "+response.getCharset()+", please use 15 for GSM7 and 72 for UCS2");
+			if(response.getCharset() ==null)
+				response.setCharset("15");
+			switch(response.getCharset()){
+			case "15":
+				break;
+			case "72":
+				break;				
+			default:
+				response.setCharset("15");
+				break;				
 			}
+			int charset = Integer.parseInt(response.getCharset());
+			
+//			if ((!"15".equalsIgnoreCase(response.getCharset())) || (!"72".equalsIgnoreCase(response.getCharset()))){
+//				logger.error("Unsuported charset code: "+response.getCharset()+", please use 15 for GSM7 and 72 for UCS2");
+//			}
 			CBSDataCodingSchemeImpl cbs = new CBSDataCodingSchemeImpl(charset);
 			USSDString ussdStrObj = this.mapProvider.getMAPParameterFactory().createUSSDString(
 					response.getUssdText(), cbs,Charset.forName("UTF-8"));
@@ -310,7 +325,8 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 			ssMapMsg.setMessageType(MAPMessageType.processUnstructuredSSRequest_Request.name());
 			ssMapMsg.setSource(logType);
 			ssMapMsg.setUssdText(ussdtext);			
-			ssMapMsg.setInitialDialogId(initialDialogId);			
+			ssMapMsg.setInitialDialogId(initialDialogId);	
+			ssMapMsg.setCharset("15");
 			UssMessage initialMsg =getUssMessages().get(initialDialogId);
 			if (initialMsg!=null){
 				ssMapMsg.setServiceCode(initialMsg.getServiceCode());
@@ -905,13 +921,15 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 		//clear all queue
 		long dialogid=mapDialog.getLocalDialogId();
 		_cleareDialogQueue(dialogid);
+		if (ussMsgRespnose.containsKey(dialogid))
+		ussMsgRespnose.remove(dialogid);
 	}
 	
 	private void _cleareDialogQueue(long dialogid){
 		if (isEriStyle.containsKey(dialogid))	
 			isEriStyle.remove(dialogid);
-		if (ussMsgRespnose.containsKey(dialogid))
-			ussMsgRespnose.remove(dialogid);
+//		if (ussMsgRespnose.containsKey(dialogid))
+//			ussMsgRespnose.remove(dialogid);
 		if (httpdialogs.contains(dialogid))
 			httpdialogs.remove(dialogid);
 		if(mapRoutingdialogs.containsKey(dialogid))

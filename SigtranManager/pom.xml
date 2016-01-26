@@ -16,6 +16,8 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
+		<mobicents.jss7>3.0.0-SNAPSHOT</mobicents.jss7>
+		<mobicents.sctp>1.7.0-SNAPSHOT</mobicents.sctp>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -84,42 +86,42 @@
         <dependency>
 			<groupId>org.mobicents.protocols.sctp</groupId>
 			<artifactId>sctp-impl</artifactId>
-			<version>1.6.0.FINAL</version>
+			<version>${mobicents.sctp}</version>
 			<type>jar</type>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.mobicents.protocols.ss7.sccp</groupId>
 			<artifactId>sccp-api</artifactId>
-			<version>2.1.0.FINAL</version>
+			<version>${mobicents.jss7}</version>
 			<type>jar</type>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.mobicents.protocols.ss7.sccp</groupId>
 			<artifactId>sccp-impl</artifactId>
-			<version>2.1.0.FINAL</version>
+			<version>${mobicents.jss7}</version>
 			<type>jar</type>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.mobicents.protocols.ss7.map</groupId>
 			<artifactId>map-impl</artifactId>
-			<version>2.1.0.FINAL</version>
+			<version>${mobicents.jss7}</version>
 			<type>jar</type>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.mobicents.protocols.ss7.m3ua</groupId>
 			<artifactId>m3ua-api</artifactId>
-			<version>2.1.0.FINAL</version>
+			<version>${mobicents.jss7}</version>
 			<type>jar</type>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.mobicents.protocols.ss7.m3ua</groupId>
 			<artifactId>m3ua-impl</artifactId>
-			<version>2.1.0.FINAL</version>
+			<version>${mobicents.jss7}</version>
 			<type>jar</type>
 			<scope>provided</scope>
 		</dependency>
