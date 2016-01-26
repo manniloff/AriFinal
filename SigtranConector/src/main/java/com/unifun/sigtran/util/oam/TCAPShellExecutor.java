@@ -63,7 +63,12 @@ public class TCAPShellExecutor {
 		}catch(Exception e){
 			return "Please provide proper timeout";
 		}
-		this.tcapStack.setInvokeTimeout(timeout);
+		try {
+			this.tcapStack.setInvokeTimeout(timeout);
+		} catch (Exception e) {			
+			e.printStackTrace();
+			return e.getMessage();
+		}
 		return String.format("Tcap Invoke timeout seted to %d", timeout);
 	}
 	
@@ -83,7 +88,12 @@ public class TCAPShellExecutor {
 		}catch(Exception e){
 			return "Please provide proper maxdialogs";
 		}
-		this.tcapStack.setMaxDialogs(maxdialogs);
+		try {
+			this.tcapStack.setMaxDialogs(maxdialogs);
+		} catch (Exception e) {			
+			e.printStackTrace();
+			return e.getMessage();
+		}
 		return String.format("Tcap MaxDialogs seted to %d", maxdialogs);
 	}
 	//
@@ -102,7 +112,12 @@ public class TCAPShellExecutor {
 		}catch(Exception e){
 			return "Please provide proper dialogidletimeout";
 		}
-		this.tcapStack.setDialogIdleTimeout(dialogidletimeout);
+		try {
+			this.tcapStack.setDialogIdleTimeout(dialogidletimeout);
+		} catch (Exception e) {		
+			e.printStackTrace();
+			return e.getMessage();
+		}
 		return String.format("Tcap DialogIdleTimeout seted to %d", dialogidletimeout);
 	}
 	

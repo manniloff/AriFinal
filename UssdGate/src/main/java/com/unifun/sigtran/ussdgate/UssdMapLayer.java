@@ -28,10 +28,12 @@ import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
 
+import org.mobicents.protocols.ss7.indicator.AddressIndicator;
 import org.mobicents.protocols.ss7.indicator.NatureOfAddress;
 import org.mobicents.protocols.ss7.indicator.RoutingIndicator;
 import org.mobicents.protocols.ss7.m3ua.As;
 import org.mobicents.protocols.ss7.m3ua.M3UAManagement;
+import org.mobicents.protocols.ss7.m3ua.RouteAs;
 import org.mobicents.protocols.ss7.map.MAPStackImpl;
 import org.mobicents.protocols.ss7.map.api.MAPApplicationContext;
 import org.mobicents.protocols.ss7.map.api.MAPApplicationContextName;
@@ -57,16 +59,36 @@ import org.mobicents.protocols.ss7.map.api.primitives.ISDNAddressString;
 import org.mobicents.protocols.ss7.map.api.primitives.MAPExtensionContainer;
 import org.mobicents.protocols.ss7.map.api.primitives.NumberingPlan;
 import org.mobicents.protocols.ss7.map.api.primitives.USSDString;
+import org.mobicents.protocols.ss7.map.api.service.supplementary.ActivateSSRequest;
+import org.mobicents.protocols.ss7.map.api.service.supplementary.ActivateSSResponse;
+import org.mobicents.protocols.ss7.map.api.service.supplementary.DeactivateSSRequest;
+import org.mobicents.protocols.ss7.map.api.service.supplementary.DeactivateSSResponse;
+import org.mobicents.protocols.ss7.map.api.service.supplementary.EraseSSRequest;
+import org.mobicents.protocols.ss7.map.api.service.supplementary.EraseSSResponse;
+import org.mobicents.protocols.ss7.map.api.service.supplementary.GetPasswordRequest;
+import org.mobicents.protocols.ss7.map.api.service.supplementary.GetPasswordResponse;
+import org.mobicents.protocols.ss7.map.api.service.supplementary.InterrogateSSRequest;
+import org.mobicents.protocols.ss7.map.api.service.supplementary.InterrogateSSResponse;
 import org.mobicents.protocols.ss7.map.api.service.supplementary.MAPDialogSupplementary;
 import org.mobicents.protocols.ss7.map.api.service.supplementary.MAPServiceSupplementaryListener;
 import org.mobicents.protocols.ss7.map.api.service.supplementary.ProcessUnstructuredSSRequest;
 import org.mobicents.protocols.ss7.map.api.service.supplementary.ProcessUnstructuredSSResponse;
+import org.mobicents.protocols.ss7.map.api.service.supplementary.RegisterPasswordRequest;
+import org.mobicents.protocols.ss7.map.api.service.supplementary.RegisterPasswordResponse;
+import org.mobicents.protocols.ss7.map.api.service.supplementary.RegisterSSRequest;
+import org.mobicents.protocols.ss7.map.api.service.supplementary.RegisterSSResponse;
 import org.mobicents.protocols.ss7.map.api.service.supplementary.UnstructuredSSNotifyRequest;
 import org.mobicents.protocols.ss7.map.api.service.supplementary.UnstructuredSSNotifyResponse;
 import org.mobicents.protocols.ss7.map.api.service.supplementary.UnstructuredSSRequest;
 import org.mobicents.protocols.ss7.map.api.service.supplementary.UnstructuredSSResponse;
 import org.mobicents.protocols.ss7.map.datacoding.CBSDataCodingSchemeImpl;
+import org.mobicents.protocols.ss7.sccp.SccpProtocolVersion;
 import org.mobicents.protocols.ss7.sccp.SccpStack;
+import org.mobicents.protocols.ss7.sccp.impl.parameter.GlobalTitle0001Impl;
+import org.mobicents.protocols.ss7.sccp.impl.parameter.GlobalTitle0010Impl;
+import org.mobicents.protocols.ss7.sccp.impl.parameter.GlobalTitle0011Impl;
+import org.mobicents.protocols.ss7.sccp.impl.parameter.GlobalTitle0100Impl;
+import org.mobicents.protocols.ss7.sccp.impl.parameter.SccpAddressImpl;
 import org.mobicents.protocols.ss7.sccp.parameter.GlobalTitle;
 import org.mobicents.protocols.ss7.sccp.parameter.SccpAddress;
 import org.mobicents.protocols.ss7.tcap.api.TCAPStack;
@@ -343,9 +365,11 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 			keepUssMessage(ssMapMsg.getDialogId(), ssMapMsg);
 			return dialogid;
 		} catch (MAPException ex) {
+			ex.printStackTrace();
 			logger.error("[initiateUSSD]: " + ex.getMessage());
 			return -1;
 		} catch (Exception ex) {
+			ex.printStackTrace();
 			logger.error("[initiateUSSD]: " + ex.getMessage());
 			return -1;
 		}
@@ -444,26 +468,37 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 		}
 		switch (mapSettings.get("gtType")) {
 		case "GT0001":
-			gtG = GlobalTitle.getInstance(NatureOfAddress.valueOf(mapSettings.get("gtNatureOfAddress")), msisdn);
+			//gtG = new GlobalTitle0001Impl(msisdn, NatureOfAddress.valueOf(mapSettings.get("gtNatureOfAddress")));//GlobalTitle.getInstance(NatureOfAddress.valueOf(mapSettings.get("gtNatureOfAddress")), msisdn);
+			gtG = this.sccpStack.getSccpProvider().getParameterFactory().createGlobalTitle(msisdn, NatureOfAddress.valueOf(mapSettings.get("gtNatureOfAddress")));
 			break;
 		case "GT0010":
-			gtG = GlobalTitle.getInstance(Integer.parseInt(mapSettings.get("gtTranslationType")), msisdn);
+			//gtG =  new GlobalTitle0010Impl(msisdn, Integer.parseInt(mapSettings.get("gtTranslationType")));//GlobalTitle.getInstance(Integer.parseInt(mapSettings.get("gtTranslationType")), msisdn);
+			gtG = this.sccpStack.getSccpProvider().getParameterFactory().createGlobalTitle(msisdn, Integer.parseInt(mapSettings.get("gtTranslationType")));
 			break;
 		case "GT0011":
-			gtG = GlobalTitle.getInstance(Integer.parseInt(mapSettings.get("gtTranslationType")), 
-					org.mobicents.protocols.ss7.indicator.NumberingPlan.valueOf(mapSettings.get("gtNumberingPlan")), msisdn);
+//			gtG = GlobalTitle.getInstance(Integer.parseInt(mapSettings.get("gtTranslationType")), 
+//					org.mobicents.protocols.ss7.indicator.NumberingPlan.valueOf(mapSettings.get("gtNumberingPlan")), msisdn);
+			gtG = this.sccpStack.getSccpProvider().getParameterFactory().createGlobalTitle(msisdn, Integer.parseInt(mapSettings.get("gtTranslationType")),
+					org.mobicents.protocols.ss7.indicator.NumberingPlan.valueOf(mapSettings.get("gtNumberingPlan")),
+					null);
 			break;
 		case "GT0100":
-			gtG = GlobalTitle.getInstance(Integer.parseInt(mapSettings.get("gtTranslationType")), 
-					org.mobicents.protocols.ss7.indicator.NumberingPlan.valueOf(mapSettings.get("gtNumberingPlan")), 
-					NatureOfAddress.valueOf(mapSettings.get("gtNatureOfAddress")), msisdn);
+//			gtG = GlobalTitle.getInstance(Integer.parseInt(mapSettings.get("gtTranslationType")), 
+//					org.mobicents.protocols.ss7.indicator.NumberingPlan.valueOf(mapSettings.get("gtNumberingPlan")), 
+//					NatureOfAddress.valueOf(mapSettings.get("gtNatureOfAddress")), msisdn);
+			gtG = this.sccpStack.getSccpProvider().getParameterFactory().createGlobalTitle(msisdn, Integer.parseInt(mapSettings.get("gtTranslationType")),
+					org.mobicents.protocols.ss7.indicator.NumberingPlan.valueOf(mapSettings.get("gtNumberingPlan")),
+					null, NatureOfAddress.valueOf(mapSettings.get("gtNatureOfAddress")));
 			break;
 		}
 		if (gtG == null) {
 			throw new Exception("[MAP] GT is not defined correctly. Type must be GT0001 or GT0010 or GT0011 or GT0100");
 		}
-		//                                   
-		SccpAddress sccpAddress = new SccpAddress(RoutingIndicator.valueOf(mapSettings.get("routingIndicator")), dpc, gtG, ssn);
+		//
+		//AddressIndicator aiObj = new AddressIndicator((byte) Integer.parseInt(mapSettings.get("addressIndicator")), SccpProtocolVersion.ITU);
+		//SccpAddress sccpAddress = new SccpAddress(RoutingIndicator.valueOf(mapSettings.get("routingIndicator")), dpc, gtG, ssn);
+		SccpAddress sccpAddress = new SccpAddressImpl(RoutingIndicator.valueOf(mapSettings.get("routingIndicator")), gtG, dpc, ssn);
+		
 
 		return sccpAddress;
 	}
@@ -471,7 +506,8 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 	private int getAvailableDPC(){
 		//ConcurrentHashMap<Long, String> mtpstatus =  ((SccpUnifunStackWrapper)this.sccpStack).getMtpstatus();
 		//if ("server".equalsIgnoreCase(cfg.getType())){
-		java.util.Map<String, As[]> routes = new HashMap<>();
+		//java.util.Map<String, As[]> routes = new HashMap<>();
+		java.util.Map<String,  RouteAs> routes = new HashMap<>();
 		this.sccpStack.getMtp3UserParts().forEach((id, mtpUserPart)->{
 			if (mtpUserPart instanceof M3UAManagement){
 				routes.putAll(((M3UAManagement)mtpUserPart).getRoute());
@@ -482,7 +518,8 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 			for (String route : routes.keySet()){
 				String rdpc = route.split(":")[0];
 				if (rdpc.equals(appSettings.get("map").get("dpc"))){
-					As[] associations = routes.get(route);
+					//As[] associations = routes.get(route);
+					As[] associations = routes.get(route).getAsArray();
 					for (As assoc : associations){
 						if (assoc.isUp()){
 							return Integer.parseInt(appSettings.get("map").get("dpc"));
@@ -494,7 +531,7 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 			//loop to find another Available PC in case that the main is down.
 			for (String route : routes.keySet()){
 				String rdpc = route.split(":")[0];				
-				As[] associations = routes.get(route);
+				As[] associations = routes.get(route).getAsArray();
 				for (As assoc : associations){
 					if (assoc.isUp()){
 						return Integer.parseInt(rdpc);
@@ -1012,6 +1049,132 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 
 	public ConcurrentHashMap<Long, UssMessage> getUssMsgRespnose() {
 		return ussMsgRespnose;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.supplementary.MAPServiceSupplementaryListener#onRegisterSSRequest(org.mobicents.protocols.ss7.map.api.service.supplementary.RegisterSSRequest)
+	 */
+	@Override
+	public void onRegisterSSRequest(RegisterSSRequest request) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.supplementary.MAPServiceSupplementaryListener#onRegisterSSResponse(org.mobicents.protocols.ss7.map.api.service.supplementary.RegisterSSResponse)
+	 */
+	@Override
+	public void onRegisterSSResponse(RegisterSSResponse response) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.supplementary.MAPServiceSupplementaryListener#onEraseSSRequest(org.mobicents.protocols.ss7.map.api.service.supplementary.EraseSSRequest)
+	 */
+	@Override
+	public void onEraseSSRequest(EraseSSRequest request) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.supplementary.MAPServiceSupplementaryListener#onEraseSSResponse(org.mobicents.protocols.ss7.map.api.service.supplementary.EraseSSResponse)
+	 */
+	@Override
+	public void onEraseSSResponse(EraseSSResponse response) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.supplementary.MAPServiceSupplementaryListener#onActivateSSRequest(org.mobicents.protocols.ss7.map.api.service.supplementary.ActivateSSRequest)
+	 */
+	@Override
+	public void onActivateSSRequest(ActivateSSRequest request) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.supplementary.MAPServiceSupplementaryListener#onActivateSSResponse(org.mobicents.protocols.ss7.map.api.service.supplementary.ActivateSSResponse)
+	 */
+	@Override
+	public void onActivateSSResponse(ActivateSSResponse response) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.supplementary.MAPServiceSupplementaryListener#onDeactivateSSRequest(org.mobicents.protocols.ss7.map.api.service.supplementary.DeactivateSSRequest)
+	 */
+	@Override
+	public void onDeactivateSSRequest(DeactivateSSRequest request) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.supplementary.MAPServiceSupplementaryListener#onDeactivateSSResponse(org.mobicents.protocols.ss7.map.api.service.supplementary.DeactivateSSResponse)
+	 */
+	@Override
+	public void onDeactivateSSResponse(DeactivateSSResponse response) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.supplementary.MAPServiceSupplementaryListener#onInterrogateSSRequest(org.mobicents.protocols.ss7.map.api.service.supplementary.InterrogateSSRequest)
+	 */
+	@Override
+	public void onInterrogateSSRequest(InterrogateSSRequest request) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.supplementary.MAPServiceSupplementaryListener#onInterrogateSSResponse(org.mobicents.protocols.ss7.map.api.service.supplementary.InterrogateSSResponse)
+	 */
+	@Override
+	public void onInterrogateSSResponse(InterrogateSSResponse response) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.supplementary.MAPServiceSupplementaryListener#onGetPasswordRequest(org.mobicents.protocols.ss7.map.api.service.supplementary.GetPasswordRequest)
+	 */
+	@Override
+	public void onGetPasswordRequest(GetPasswordRequest request) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.supplementary.MAPServiceSupplementaryListener#onGetPasswordResponse(org.mobicents.protocols.ss7.map.api.service.supplementary.GetPasswordResponse)
+	 */
+	@Override
+	public void onGetPasswordResponse(GetPasswordResponse response) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.supplementary.MAPServiceSupplementaryListener#onRegisterPasswordRequest(org.mobicents.protocols.ss7.map.api.service.supplementary.RegisterPasswordRequest)
+	 */
+	@Override
+	public void onRegisterPasswordRequest(RegisterPasswordRequest request) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.supplementary.MAPServiceSupplementaryListener#onRegisterPasswordResponse(org.mobicents.protocols.ss7.map.api.service.supplementary.RegisterPasswordResponse)
+	 */
+	@Override
+	public void onRegisterPasswordResponse(RegisterPasswordResponse response) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

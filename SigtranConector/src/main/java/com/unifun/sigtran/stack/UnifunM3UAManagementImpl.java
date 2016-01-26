@@ -24,8 +24,8 @@ public class UnifunM3UAManagementImpl extends  M3UAManagementImpl {
 	 private boolean enableForward= false;
 	 private Map<Association, Association> forwardAssocGroup = new HashMap<>();	 
 
-	public UnifunM3UAManagementImpl(String name) {
-		super(name);		
+	public UnifunM3UAManagementImpl(String name,  String productName) {
+		super(name, productName);		
 	}
 
 	@Override

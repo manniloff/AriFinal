@@ -108,6 +108,7 @@ INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES
 INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'gtTranslationType', '0');
 INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'gtNumberingPlan', 'ISDN_TELEPHONY');
 INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'routingIndicator', 'ROUTING_BASED_ON_GLOBAL_TITLE');
+INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'addressIndicator', '16');
 INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('db', 'mapMsgWrProc', 'store_mapMsg');
 INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('db', 'routingRuleTable', 'ss_route_rule');
 INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('http', 'resptimeout', '10000');

@@ -75,6 +75,20 @@
 			<version>${mobicents.jss7}</version>
 			<scope>provided</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.mobicents.protocols.ss7.sccp</groupId>
+			<artifactId>sccp-api</artifactId>
+			<version>${mobicents.jss7}</version>
+			<type>jar</type>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mobicents.protocols.ss7.sccp</groupId>
+			<artifactId>sccp-impl</artifactId>
+			<version>${mobicents.jss7}</version>
+			<type>jar</type>
+			<scope>provided</scope>
+		</dependency>
 		
     </dependencies>
 

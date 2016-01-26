@@ -3,6 +3,8 @@
  */
 package com.unifun.sigtran.stack;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.mobicents.protocols.api.Management;
@@ -51,13 +53,15 @@ public class M3UA {
     private boolean initM3UA() {
         try {
             logger.debug("[M3UA] Initializing M3UA Stack ....");
-            this.serverM3UAMgmt = new UnifunM3UAManagementImpl("unifun_m3ua");
+            this.serverM3UAMgmt = new UnifunM3UAManagementImpl("unifun_m3ua", "unfiun");
             this.serverM3UAMgmt.setPersistDir(this.configPath);
             TimeUnit.SECONDS.sleep(2);
             this.serverM3UAMgmt.setTransportManagement(this.sctpManagement);
             this.serverM3UAMgmt.start();
             this.serverM3UAMgmt.removeAllResourses();
-            this.m3uaShellExecuter.setM3uaManagement(this.serverM3UAMgmt);
+            Map<String, M3UAManagementImpl> m3uaManagementsTem = new HashMap<String, M3UAManagementImpl>();
+            m3uaManagementsTem.put("unifun", this.serverM3UAMgmt);
+            this.m3uaShellExecuter.setM3uaManagements(m3uaManagementsTem);
             logger.debug("[M3UA] Initialized M3UA Stack ....");
             return true;
         } catch (Exception ex) {

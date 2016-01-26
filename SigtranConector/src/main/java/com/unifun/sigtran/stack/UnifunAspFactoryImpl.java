@@ -4,6 +4,7 @@
 package com.unifun.sigtran.stack;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Logger;
 import org.mobicents.protocols.api.Association;
@@ -13,6 +14,13 @@ import org.mobicents.protocols.ss7.m3ua.impl.message.M3UAMessageImpl;
 import org.mobicents.protocols.ss7.m3ua.message.M3UAMessage;
 import org.mobicents.protocols.ss7.m3ua.message.MessageClass;
 import org.mobicents.protocols.ss7.m3ua.message.transfer.PayloadData;
+import org.mobicents.protocols.ss7.mtp.Mtp3StatusCause;
+import org.mobicents.protocols.ss7.mtp.Mtp3StatusPrimitive;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.Unpooled;
+import javolution.util.FastMap;
 
 /**
  * @author rbabin
@@ -32,6 +40,7 @@ public class UnifunAspFactoryImpl extends AspFactoryImpl{
 	private ByteBuffer txBuffer = ByteBuffer.allocateDirect(8192);
 	private int[] slsTable = null;
 	private int maxSequenceNumber = 256;
+	private FastMap<Integer, AtomicInteger> congDpcList = new FastMap<Integer, AtomicInteger>().shared();
 	
 	/**
 	 * 
@@ -103,42 +112,90 @@ public class UnifunAspFactoryImpl extends AspFactoryImpl{
 	}
 	
 	private void fwWrite(M3UAMessage message, Association assoc){		
-		synchronized (txBuffer) {
-            try {
-                txBuffer.clear();
-                ((M3UAMessageImpl) message).encode(txBuffer);
-                txBuffer.flip();
+		try {
+            ByteBufAllocator byteBufAllocator = assoc.getByteBufAllocator();
+            ByteBuf byteBuf;
+            if (byteBufAllocator != null) {
+                byteBuf = byteBufAllocator.buffer();
+            } else {
+                byteBuf = Unpooled.buffer();
+            }
 
-                byte[] data = new byte[txBuffer.limit()];
-                txBuffer.get(data);
+            ((M3UAMessageImpl) message).encode(byteBuf);
 
-                org.mobicents.protocols.api.PayloadData payloadData = null;
+            org.mobicents.protocols.api.PayloadData payloadData = null;
 
+            if (this.m3UAManagementImpl.isSctpLibNettySupport()) {
                 switch (message.getMessageClass()) {
                     case MessageClass.ASP_STATE_MAINTENANCE:
                     case MessageClass.MANAGEMENT:
                     case MessageClass.ROUTING_KEY_MANAGEMENT:
-                        payloadData = new org.mobicents.protocols.api.PayloadData(data.length, data, true, true,
+                        payloadData = new org.mobicents.protocols.api.PayloadData(byteBuf.readableBytes(), byteBuf, true, true,
                                 SCTP_PAYLOAD_PROT_ID_M3UA, 0);
                         break;
                     case MessageClass.TRANSFER_MESSAGES:
-                        PayloadData payload = (PayloadData) message;                        
+                        PayloadData payload = (PayloadData) message;
                         int seqControl = payload.getData().getSLS();
-                        payloadData = new org.mobicents.protocols.api.PayloadData(data.length, data, true, false,
-                                SCTP_PAYLOAD_PROT_ID_M3UA, this.slsTable[seqControl]);
+                        payloadData = new org.mobicents.protocols.api.PayloadData(byteBuf.readableBytes(), byteBuf, true,
+                                false, SCTP_PAYLOAD_PROT_ID_M3UA, this.slsTable[seqControl]);
                         break;
                     default:
-                        payloadData = new org.mobicents.protocols.api.PayloadData(data.length, data, true, true,
+                        payloadData = new org.mobicents.protocols.api.PayloadData(byteBuf.readableBytes(), byteBuf, true, true,
                                 SCTP_PAYLOAD_PROT_ID_M3UA, 0);
                         break;
                 }
-                logger.debug(String.format("Message Class: %d, ", message.getMessageClass()));
+
                 assoc.send(payloadData);
-            } catch (Exception e) {
-                logger.error(String.format("Error while trying to send PayloadData to SCTP layer. M3UAMessage=%s", message));
+
+                // congestion control - we will send MTP-PAUSE every 8 messages
+                int congLevel = assoc.getCongestionLevel();
+                if (congLevel > 0 && message instanceof PayloadData) {
+                    PayloadData payloadData2 = (PayloadData) message;
+                    sendCongestionInfoToMtp3Users(congLevel, payloadData2.getData().getDpc());
+                }
+            } else {
+                byte[] bf = new byte[byteBuf.readableBytes()];
+                byteBuf.readBytes(bf);
+                synchronized (txBuffer) {
+                    switch (message.getMessageClass()) {
+                        case MessageClass.ASP_STATE_MAINTENANCE:
+                        case MessageClass.MANAGEMENT:
+                        case MessageClass.ROUTING_KEY_MANAGEMENT:
+                            payloadData = new org.mobicents.protocols.api.PayloadData(byteBuf.readableBytes(), bf, true, true,
+                                    SCTP_PAYLOAD_PROT_ID_M3UA, 0);
+                            break;
+                        case MessageClass.TRANSFER_MESSAGES:
+                            PayloadData payload = (PayloadData) message;
+                            int seqControl = payload.getData().getSLS();
+                            payloadData = new org.mobicents.protocols.api.PayloadData(byteBuf.readableBytes(), bf, true, false,
+                                    SCTP_PAYLOAD_PROT_ID_M3UA, this.slsTable[seqControl]);
+                            break;
+                        default:
+                            payloadData = new org.mobicents.protocols.api.PayloadData(byteBuf.readableBytes(), bf, true, true,
+                                    SCTP_PAYLOAD_PROT_ID_M3UA, 0);
+                            break;
+                    }
+
+                    assoc.send(payloadData);
+                }
             }
+        } catch (Throwable e) {
+            logger.error(String.format("Error while trying to send PayloadData to SCTP layer. M3UAMessage=%s", message), e);
         }
 	}
+	
+	private void sendCongestionInfoToMtp3Users(int congLevel, int dpc) {
+        AtomicInteger ai = congDpcList.get(dpc);
+        if (ai == null) {
+            ai = new AtomicInteger();
+            congDpcList.put(dpc, ai);
+        }
+        if (ai.incrementAndGet() % 8 == 0) {
+            Mtp3StatusPrimitive statusPrimitive = new Mtp3StatusPrimitive(dpc, Mtp3StatusCause.SignallingNetworkCongested,
+                    congLevel, 0);
+            this.m3UAManagementImpl.sendStatusMessageToLocalUser(statusPrimitive);
+        }
+    }
 
 	protected void setEnableForward(boolean enableForward) {
 		this.enableForward = enableForward;

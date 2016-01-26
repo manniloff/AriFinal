@@ -3,6 +3,9 @@
  */
 package com.unifun.sigtran.stack;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.mobicents.protocols.api.Management;
 import org.mobicents.protocols.sctp.ManagementImpl;
 import org.mobicents.protocols.sctp.netty.NettySctpManagementImpl;
@@ -38,7 +41,9 @@ public class Sctp {
 				this.sctpManagement.start();        		
 				this.sctpManagement.removeAllResourses();
 				this.sctpManagement.setConnectDelay(10000);
-				this.sctpShellExecuter.setSctpManagement(sctpManagement);			
+				Map<String, Management> sctpManagementsTemp = new HashMap<>();
+				sctpManagementsTemp.put("unifun", sctpManagement);
+				this.sctpShellExecuter.setSctpManagements(sctpManagementsTemp);			
 			} catch (InterruptedException iex) {				
 				logger.error("[SCTP]: " + iex.getMessage());				
 			} catch (Exception ex) {			

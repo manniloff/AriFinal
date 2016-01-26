@@ -3,6 +3,7 @@
  */
 package com.unifun.sigtran.stack;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.mobicents.protocols.ss7.m3ua.impl.M3UAManagementImpl;
@@ -52,7 +53,9 @@ public class Sccp {
             this.sccpStack.start();
             this.sccpStack.removeAllResourses();
             this.sccpShellExecuter = new SccpExecutor();
-            this.sccpShellExecuter.setSccpStacks(sccpStack);
+            Map<String, SccpStackImpl> sccpStacksTemp = new HashMap<>();
+            sccpStacksTemp.put("unifun", sccpStack);
+            this.sccpShellExecuter.setSccpStacks(sccpStacksTemp);
             return true;
         } catch (Exception ex) {
             logger.error(ex.getMessage());
