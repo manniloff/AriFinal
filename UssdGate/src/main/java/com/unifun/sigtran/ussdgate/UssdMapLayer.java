@@ -99,6 +99,8 @@ import org.slf4j.LoggerFactory;
 
 import com.unifun.sigtran.ussdgate.db.MapMsgDbWriter;
 
+import javolution.util.FastMap;
+
 
 public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryListener {
 
@@ -114,17 +116,23 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 	//private ExecutorService appWorker;
 	private ForkJoinPool appWorker;
 	private Map<String, Map<String,String>> appSettings = null;
-	private transient Map<Long, UssMessage> ussMessages = new HashMap<>();
-	
+	//private transient Map<Long, UssMessage> ussMessages = new HashMap<>();
+	private transient FastMap<Long, UssMessage> ussMessages = new FastMap<Long, UssMessage>();
 	//
-	private ConcurrentHashMap<Long, Long> request = new ConcurrentHashMap<Long, Long>();
+	//private ConcurrentHashMap<Long, Long> request = new ConcurrentHashMap<Long, Long>();
+	private FastMap<Long, Long> request = new FastMap<Long, Long>();
 	//<generated dialogid, initial dialgid>
-	private ConcurrentHashMap<Long, Long> mapRoutingdialogs = new ConcurrentHashMap<>();
+	//private ConcurrentHashMap<Long, Long> mapRoutingdialogs = new ConcurrentHashMap<>();
+	private FastMap<Long, Long> mapRoutingdialogs = new FastMap<Long, Long>();
 	private boolean maintenancemode = false;
-	private Map<String, SsRouteRules> rR = new HashMap<>();
-	private Map<String, SsRouteRules> prR =  new HashMap<>();
-	private ConcurrentHashMap<Long, Boolean> isEriStyle = new ConcurrentHashMap<>();
-	private ConcurrentHashMap<Long, UssMessage> ussMsgRespnose = new ConcurrentHashMap<>();
+//	private Map<String, SsRouteRules> rR = new HashMap<>();
+//	private Map<String, SsRouteRules> prR =  new HashMap<>();
+	//private ConcurrentHashMap<Long, Boolean> isEriStyle = new ConcurrentHashMap<>();
+	//private ConcurrentHashMap<Long, UssMessage> ussMsgRespnose = new ConcurrentHashMap<>();
+	private FastMap<String, SsRouteRules> rR = new FastMap<>();
+	private FastMap<String, SsRouteRules> prR =  new FastMap<>();
+	private FastMap<Long, Boolean> isEriStyle = new FastMap<>();
+	private FastMap<Long, UssMessage> ussMsgRespnose = new FastMap<>();
 	
 	/**
 	 * 
@@ -556,6 +564,8 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 	public void onRejectComponent(MAPDialog mapDialog, Long invokeId,
 			Problem problem, boolean isLocalOriginated) {
 		logger.debug("[onRejectComponent]: " + mapDialog + " [invokeId]: " + invokeId + " [Problem]: " + problem + " [isLocalOriginated]: " + isLocalOriginated);
+		
+		mapDialog.release();
 
 	}
 
@@ -940,6 +950,7 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 	@Override
 	public void onDialogRelease(MAPDialog mapDialog) {
 		logger.info(String.format("onDialogRelease for  remote Dialog=%d, local Dialog=%d", mapDialog.getLocalDialogId(),  mapDialog.getLocalDialogId()));
+		
 		_cleareDialogQueue(mapDialog.getLocalDialogId());
 
 	}
@@ -1047,7 +1058,7 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 		return subDialogs.get().getValue();
 	}
 
-	public ConcurrentHashMap<Long, UssMessage> getUssMsgRespnose() {
+	public FastMap<Long, UssMessage> getUssMsgRespnose() {
 		return ussMsgRespnose;
 	}
 
@@ -1056,7 +1067,7 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 	 */
 	@Override
 	public void onRegisterSSRequest(RegisterSSRequest request) {
-		// TODO Auto-generated method stub
+		logger.info(request.toString());
 		
 	}
 
@@ -1065,7 +1076,7 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 	 */
 	@Override
 	public void onRegisterSSResponse(RegisterSSResponse response) {
-		// TODO Auto-generated method stub
+		logger.info(request.toString());
 		
 	}
 
@@ -1074,7 +1085,7 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 	 */
 	@Override
 	public void onEraseSSRequest(EraseSSRequest request) {
-		// TODO Auto-generated method stub
+		logger.info(request.toString());
 		
 	}
 
@@ -1083,7 +1094,7 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 	 */
 	@Override
 	public void onEraseSSResponse(EraseSSResponse response) {
-		// TODO Auto-generated method stub
+		logger.info(request.toString());
 		
 	}
 
@@ -1092,7 +1103,7 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 	 */
 	@Override
 	public void onActivateSSRequest(ActivateSSRequest request) {
-		// TODO Auto-generated method stub
+		logger.info(request.toString());
 		
 	}
 
@@ -1101,7 +1112,7 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 	 */
 	@Override
 	public void onActivateSSResponse(ActivateSSResponse response) {
-		// TODO Auto-generated method stub
+		logger.info(request.toString());
 		
 	}
 
@@ -1110,7 +1121,7 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 	 */
 	@Override
 	public void onDeactivateSSRequest(DeactivateSSRequest request) {
-		// TODO Auto-generated method stub
+		logger.info(request.toString());
 		
 	}
 
@@ -1119,7 +1130,7 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 	 */
 	@Override
 	public void onDeactivateSSResponse(DeactivateSSResponse response) {
-		// TODO Auto-generated method stub
+		logger.info(request.toString());
 		
 	}
 
@@ -1128,7 +1139,7 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 	 */
 	@Override
 	public void onInterrogateSSRequest(InterrogateSSRequest request) {
-		// TODO Auto-generated method stub
+		logger.info(request.toString());
 		
 	}
 
@@ -1137,7 +1148,7 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 	 */
 	@Override
 	public void onInterrogateSSResponse(InterrogateSSResponse response) {
-		// TODO Auto-generated method stub
+		logger.info(request.toString());
 		
 	}
 
@@ -1146,7 +1157,7 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 	 */
 	@Override
 	public void onGetPasswordRequest(GetPasswordRequest request) {
-		// TODO Auto-generated method stub
+		logger.info(request.toString());
 		
 	}
 
@@ -1155,7 +1166,7 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 	 */
 	@Override
 	public void onGetPasswordResponse(GetPasswordResponse response) {
-		// TODO Auto-generated method stub
+		logger.info(request.toString());
 		
 	}
 
@@ -1164,7 +1175,7 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 	 */
 	@Override
 	public void onRegisterPasswordRequest(RegisterPasswordRequest request) {
-		// TODO Auto-generated method stub
+		logger.info(request.toString());
 		
 	}
 
@@ -1173,7 +1184,7 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 	 */
 	@Override
 	public void onRegisterPasswordResponse(RegisterPasswordResponse response) {
-		// TODO Auto-generated method stub
+		logger.info(request.toString());
 		
 	}
 

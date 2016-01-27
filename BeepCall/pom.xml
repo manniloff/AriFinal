@@ -17,52 +17,6 @@
 		<maven.compiler.target>1.8</maven.compiler.target>
 		<mobicents.jss7>2.1.0.FINAL</mobicents.jss7>
 	</properties>
-	<dependencies>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>3.8.1</version>
-			<scope>test</scope>
-		</dependency>
-    <!--  Sigtran Connector -->
-    <dependency>
-			<groupId>com.unifun.sigtran</groupId>
-			<artifactId>SigtranConector</artifactId>
-			<version>2.0</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>javax</groupId>
-			<artifactId>javaee-web-api</artifactId>
-			<version>7.0</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.tomcat</groupId>
-			<artifactId>tomcat-catalina</artifactId>
-			<version>8.0.30</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.tomcat</groupId>
-			<artifactId>tomcat-jdbc</artifactId>
-			<version>8.0.30</version>
-			<scope>provided</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.mobicents.protocols.ss7.isup</groupId>
-			<artifactId>isup-api</artifactId>
-			<version>${mobicents.jss7}</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.mobicents.protocols.ss7.isup</groupId>
-			<artifactId>isup-impl</artifactId>
-			<version>${mobicents.jss7}</version>
-			<scope>provided</scope>
-		</dependency>
-  </dependencies>
   <build>
     <finalName>BeepCall</finalName>
   </build>

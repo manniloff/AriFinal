@@ -5,8 +5,11 @@
  */
 package com.unifun.sigtran.ussdgate.service;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -124,8 +127,15 @@ public class UssdGateServletListener implements ServletContextListener {
 		}
 		logger.info("Initiate dbWorker pool");
 		dbWorker = Executors.newFixedThreadPool(getDbmaxActive(), new UssdgateThreadFactory("DbWorker"));
-		logger.info("Fetch setting from database");		
-		FetchSettings ftSt = new FetchSettings(ds);
+		String tableName="ussdgate_settings";
+		try{
+			tableName=settingsTableName();
+		}catch(Exception e){
+			e.printStackTrace();
+			tableName="ussdgate_settings";
+		}
+		logger.info("Fetch setting from database, table: "+tableName);		
+		FetchSettings ftSt = new FetchSettings(ds, tableName);
 		try {
 			appSettings = ftSt.fetchSettings();
 		} catch (SQLException e) {
@@ -193,5 +203,25 @@ public class UssdGateServletListener implements ServletContextListener {
 			return 10;
 		}
 	} 
+	
+	private String settingsTableName(){
+		Properties prop = new Properties();
+		InputStream input = null;
+		try {
+			input = this.getClass().getClassLoader().getResourceAsStream("settings.properties");			
+			prop.load(input);		
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		} finally {
+			if (input != null) {
+				try {
+					input.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return (prop.getProperty("settingstable")!=null)?prop.getProperty("settingstable"):"ussdgate_settings";
+	}
 
 }

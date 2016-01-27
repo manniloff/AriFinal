@@ -15,6 +15,17 @@ PRIMARY KEY (`id`)
 DEFAULT CHARACTER SET = utf8
 COLLATE = utf8_bin;
 
+create table ussdgate_settings2 (
+id int  NOT NULL AUTO_INCREMENT,
+`st_type` varchar(50),
+`name` varchar(50),
+`value` varchar(255),
+PRIMARY KEY (`id`)
+)
+DEFAULT CHARACTER SET = utf8
+COLLATE = utf8_bin;
+
+
 CREATE TABLE `ss_map_message_log` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `dpc` int(11) NOT NULL,
@@ -34,6 +45,58 @@ CREATE TABLE `ss_map_message_log` (
   KEY `initial_dialog_id` (`initial_dialog_id`),
   KEY `msisdn` (`msisdn`,`message_type`)
 ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+CREATE TABLE `ss_route_rule` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `connectionsps` varchar(255) DEFAULT NULL,
+  `destination_address` varchar(255) DEFAULT NULL,
+  `protocol_type` varchar(255) DEFAULT NULL,
+  `service_code` varchar(255) DEFAULT NULL,
+  `ussd_text` varchar(255) DEFAULT NULL,
+  `ussdsc` varchar(255) DEFAULT NULL,
+  `proxy_mode` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK_l96qgfr475vpoqb9c4ifsb1oi` (`ussd_text`,`proxy_mode`),
+  UNIQUE KEY `UK_325oqmcx6agp068e8tsi2se1r` (`service_code`,`proxy_mode`)
+) DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+
+-- Insert some sample data
+INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'serviceCenter', '998970000010');
+INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'opc', '13076');
+INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'dpc', '13259');
+INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'opcssn', '6');
+INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'dpcssn', '6');
+INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'gtType', 'GT0100');
+INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'gtNatureOfAddress', 'INTERNATIONAL');
+INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'gtTranslationType', '0');
+INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'gtNumberingPlan', 'ISDN_TELEPHONY');
+INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'routingIndicator', 'ROUTING_BASED_ON_GLOBAL_TITLE');
+INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'addressIndicator', '16');
+INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('db', 'mapMsgWrProc', 'store_mapMsg');
+INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('db', 'routingRuleTable', 'ss_route_rule');
+INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('http', 'resptimeout', '10000');
+INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('app', 'threads', '1000');
+INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('app', 'forwardFailure', 'false');
+
+INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('map', 'serviceCenter', '998970000010');
+INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('map', 'opc', '13106');
+INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('map', 'dpc', '13269');
+INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('map', 'opcssn', '6');
+INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('map', 'dpcssn', '6');
+INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('map', 'gtType', 'GT0100');
+INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('map', 'gtNatureOfAddress', 'INTERNATIONAL');
+INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('map', 'gtTranslationType', '0');
+INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('map', 'gtNumberingPlan', 'ISDN_TELEPHONY');
+INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('map', 'routingIndicator', 'ROUTING_BASED_ON_GLOBAL_TITLE');
+INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('map', 'addressIndicator', '16');
+INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('db', 'mapMsgWrProc', 'store_mapMsg');
+INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('db', 'routingRuleTable', 'ss_route_rule');
+INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('http', 'resptimeout', '10000');
+INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('app', 'threads', '1000');
+INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('app', 'forwardFailure', 'false');
+
+INSERT INTO `ss_route_rule` (`destination_address`, `protocol_type`, `service_code`, `ussd_text`, `proxy_mode`) VALUES ('http://127.0.0.1:7080/UssdGate/test', 'HTTP', '178', '*178#', '0');
 
 DELIMITER ;;
 CREATE PROCEDURE `store_mapMsg`(
@@ -81,38 +144,3 @@ BEGIN
 	p_service_code
 	);
 END ;;
-
-CREATE TABLE `ss_route_rule` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `connectionsps` varchar(255) DEFAULT NULL,
-  `destination_address` varchar(255) DEFAULT NULL,
-  `protocol_type` varchar(255) DEFAULT NULL,
-  `service_code` varchar(255) DEFAULT NULL,
-  `ussd_text` varchar(255) DEFAULT NULL,
-  `ussdsc` varchar(255) DEFAULT NULL,
-  `proxy_mode` int(11) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `UK_l96qgfr475vpoqb9c4ifsb1oi` (`ussd_text`,`proxy_mode`),
-  UNIQUE KEY `UK_325oqmcx6agp068e8tsi2se1r` (`service_code`,`proxy_mode`)
-) DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
-
-
--- Insert some sample data
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'serviceCenter', '99366399113');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'opc', '509');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'dpc', '6110');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'opcssn', '8');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'dpcssn', '8');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'gtType', 'GT0100');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'gtNatureOfAddress', 'INTERNATIONAL');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'gtTranslationType', '0');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'gtNumberingPlan', 'ISDN_TELEPHONY');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'routingIndicator', 'ROUTING_BASED_ON_GLOBAL_TITLE');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'addressIndicator', '16');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('db', 'mapMsgWrProc', 'store_mapMsg');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('db', 'routingRuleTable', 'ss_route_rule');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('http', 'resptimeout', '10000');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('app', 'threads', '1000');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('app', 'forwardFailure', 'false');
-
-INSERT INTO `ussdgatedb`.`ss_route_rule` (`destination_address`, `protocol_type`, `service_code`, `ussd_text`, `proxy_mode`) VALUES ('http://127.0.0.1:7080/UssdGate/test', 'HTTP', '#444#', '#444#', '0');
