@@ -8,10 +8,10 @@
 #sctp association show stackname <stack-name>
 #sctp association destroy <assoc-name> stackname <stack-name>
 #sctp association create <assoc-name> <CLIENT | SERVER> <server-name> <peerip> <peer-port> <host- ip> <host-port> sockettype <socket-type> stackname <stack-name>
-sctp association create unifun1 CLIENT 11.17.32.90 5505 10.160.9.11 5505 sockettype SCTP stackname unifun
-sctp association create unifun2 CLIENT 11.17.32.124 5505 10.160.9.13 5505 sockettype SCTP stackname unifun
-sctp association create unifun3 CLIENT 11.17.32.118 5506 10.160.9.11 5506 sockettype SCTP stackname unifun
-sctp association create unifun4 CLIENT 11.17.32.128 5506 10.160.9.13 5506 sockettype SCTP stackname unifun
+sctp association create unifun1 CLIENT 10.124.42.1 3101 10.124.178.17 2905 sockettype SCTP stackname unifun
+sctp association create unifun2 CLIENT 10.124.42.2 3102 10.124.178.17 2906 sockettype SCTP stackname unifun
+sctp association create unifun3 CLIENT 10.124.8.33 3103 10.124.178.17 2907 sockettype SCTP stackname unifun
+sctp association create unifun4 CLIENT 10.124.8.34 3104 10.124.178.17 2908 sockettype SCTP stackname unifun
 
 #sctp set <command> <value> stackname <stack-name>
 
@@ -19,8 +19,8 @@ sctp association create unifun4 CLIENT 11.17.32.128 5506 10.160.9.13 5506 socket
 #Create AS
 #m3ua as destroy <as-name> stackname <stack-name>
 #m3ua as create <as-name> <AS | SGW | IPSP> mode <SE | DE> ipspType < client | server > rc <routing-context> traffic-mode <traffic mode> min-asp <minimum asp active for TrafficModeType.Loadshare> network-appearance <network appearance> stackname <stack-name>
-m3ua as create AS1 IPSP mode SE ipspType client rc 0 traffic-mode loadshare stackname unifun
-m3ua as create AS2 IPSP mode SE ipspType client rc 0 traffic-mode loadshare stackname unifun
+m3ua as create AS1 AS mode SE ipspType client traffic-mode loadshare network-appearance 12 stackname unifun
+m3ua as create AS2 AS mode SE ipspType client traffic-mode loadshare network-appearance 12 stackname unifun
 
 # Create ASP
 #m3ua asp show stackname <stack-name>
@@ -43,8 +43,8 @@ m3ua as add AS2 ASP4 stackname unifun
 #m3ua route show stackname <stack-name>
 #m3ua route remove <as-name> <dpc> <opc> <si> stackname <stack-name>
 #m3ua route add <as-name> <dpc> <opc> <si> trafficmode <traffic-mode> stackname <stack-name>
-m3ua route add AS1 13259 -1 -1 stackname unifun
-m3ua route add AS2 13269 -1 -1 stackname unifun
+m3ua route add AS1 1051 -1 -1 stackname unifun
+m3ua route add AS2 2051 -1 -1 stackname unifun
 
 #Start ASP
 #m3ua asp stop <asp-name> stackname <stack-name>
@@ -60,50 +60,50 @@ m3ua asp start ASP4 stackname unifun
 #sccp sap delete <id> stackname <stack-name>
 #sccp sap modify <id> <mtp3-id> <opc> <ni> stackname <stack-named>
 #sccp sap create <id> <mtp3-id> <opc> <ni> stackname <stack-name>
-sccp sap create 1 1 13076 2 stackname unifun
-sccp sap create 2 1 13106 2 stackname unifun
+sccp sap create 1 1 1325 3 stackname unifun
+sccp sap create 2 1 1326 3 stackname unifun
 
 #Create destination for service access point
 #sccp dest show <sap-id> id <id> stackname <stack-name>
 #sccp dest delete <sap-id> <id> stackname <stack-name>
 #sccp dest modify <sap-id> <id> <first-dpc> <last-dpc> <first-sls> <lastsls> <sls-mask> stackname <stack-name>
 #sccp dest create <sap-id> <id> <first-dpc> <last-dpc> <first-sls> <lastsls> <sls-mask> stackname <stack-name>
-sccp dest create 1 1 13259 13259 0 255 255 stackname unifun
-sccp dest create 2 2 13269 13269 0 255 255 stackname unifun
-sccp dest create 2 3 13259 13259 0 255 255 stackname unifun
-sccp dest create 1 4 13269 13269 0 255 255 stackname unifun
+sccp dest create 1 1 1051 1051 0 255 255 stackname unifun
+sccp dest create 2 2 2051 2051 0 255 255 stackname unifun
+sccp dest create 2 3 1051 1051 0 255 255 stackname unifun
+sccp dest create 1 4 2051 2051 0 255 255 stackname unifun
 
 #Create Remote Signaling Point
 #sccp rsp show id <id> stackname <stack-name>
 #sccp rsp delete <id> stackname <stack-name>
 #sccp rsp modify <id> <remote-spc> <rspc-flag> <mask> stackname <stack-name>
 #sccp rsp create <id> <remote-spc> <rspc-flag> <mask> stackname <stack-name>
-sccp rsp create 1 13259 0 0 stackname unifun
-sccp rsp create 2 13269 0 0 stackname unifun
+sccp rsp create 1 1051 0 0 stackname unifun
+sccp rsp create 2 2051 0 0 stackname unifun
 
 #Remote Sub-System Management
 #sccp rss show id <id> stackname <stack-name>
 #sccp rss delete <id> stackname <stack-name>
 #sccp rss modify <id> <remote-spc> <remote-ssn> <rss-flag> prohibitedwhenspcresuming <mark-prohibited-when-spc-resuming> stackname <stack-name>
 #sccp rss create <id> <remote-spc> <remote-ssn> <rss-flag> prohibitedwhenspcresuming <mark-prohibited-when-spc-resuming> stackname <stack-name>
-sccp rss create 1 13259 6 0 stackname unifun
-sccp rss create 2 13269 6 0 stackname unifun
+sccp rss create 1 1051 6 0 stackname unifun
+sccp rss create 2 2051 6 0 stackname unifun
 
 #sccp address show id <id> stackname <stack-name>
 #sccp address delete <id> stackname <stack-name>
 #sccp address create <id> <address-indicator(71)> <point-code> <subsystem-number> <translation-type> <numbering-plan>  <nature-of-address-indicator> <digits>
-sccp address create 1 19 13076 147 0 1 4 998970000010
-sccp address create 2 19 13106 147 0 1 4 998970000010
-sccp address create 3 19 13259 6 0 1 4 998/*
-sccp address create 4 19 13269 6 0 1 4 998/*
+sccp address create 1 19 1325 147 0 1 4 237660001325
+sccp address create 2 19 1326 147 0 1 4 237660001325
+sccp address create 3 19 1051 6 0 1 4 237/*
+sccp address create 4 19 2051 6 0 1 4 237/*
 
 #sccp rule show id <id> stackname <stack-name>
 #sccp rule delete <id> stackname <stack-name>
 #sccp rule create <id> <mask> <address-indicator> <point-code> <subsystem-number> <translation-type> <numbering-plan> <nature-of-address-indicator> <digits> <ruleType> <primary-address-id> backup-addressid <backup-address-id> loadsharing-algo <loadsharing-algorithm> newcgparty-addressid <new-callingPartyAddress-id> origination-type <originationType> stackname <stack-name>
-sccp rule create 1 R 18 0 147 0 1 4 998970000010 loadshared 1 backup-addressid 2 loadsharing-algo bit0 origination-type remoteOriginated stackname unifun
+sccp rule create 1 R 18 0 147 0 1 4 237660001325 loadshared 1 backup-addressid 2 loadsharing-algo bit0 origination-type remoteOriginated stackname unifun
 #sccp rule create 2 R 19 13106 147 0 1 4 998970000010 loadshared 2 backup-addressid 1 loadsharing-algo bit0 origination-type remoteOriginated stackname unifun
 #sccp rule create 3 R/K 19 13259 6 0 1 4 998/* loadshared 3 backup-addressid 4 loadsharing-algo bit0 origination-type localOriginated stackname unifun
-sccp rule create 4 R/K 18 0 6 0 1 4 998/* loadshared 3 backup-addressid 4 loadsharing-algo bit0 origination-type localOriginated stackname unifun
+sccp rule create 4 R/K 18 0 6 0 1 4 237/* loadshared 3 backup-addressid 4 loadsharing-algo bit0 origination-type localOriginated stackname unifun
 
 #sccp lmr delete <id> stackname <stack-name>
 #sccp lmr modify <id> <first-spc> <last-spc> <long-message-rule-type> stackname <stack-name>
@@ -139,14 +139,14 @@ map start
 
 ####################################################
 #forward associations
-sctp server create unifun1 10.160.9.11 7780 SCTP stackname unifun
-sctp server create unifun2 10.160.9.13 7780 SCTP stackname unifun
-sctp server create unifun3 10.160.9.11 7781 SCTP stackname unifun
-sctp server create unifun4 10.160.9.13 7781 SCTP stackname unifun
-sctp association create fwassoc1 SERVER unifun1 10.160.9.12 7780 SCTP stackname unifun
-sctp association create fwassoc2 SERVER unifun2 10.160.9.14 7780 SCTP stackname unifun
-sctp association create fwassoc3 SERVER unifun3 10.160.9.12 7781 SCTP stackname unifun
-sctp association create fwassoc4 SERVER unifun4 10.160.9.14 7781 SCTP stackname unifun
+sctp server create unifun1 10.124.178.17 7780 SCTP stackname unifun
+sctp server create unifun2 10.124.178.17 7781 SCTP stackname unifun
+sctp server create unifun3 10.124.178.17 7782 SCTP stackname unifun
+sctp server create unifun4 10.124.178.17 7783 SCTP stackname unifun
+sctp association create fwassoc1 SERVER unifun1 10.124.178.18 7780 SCTP stackname unifun
+sctp association create fwassoc2 SERVER unifun2 10.124.178.18 7781 SCTP stackname unifun
+sctp association create fwassoc3 SERVER unifun3 10.124.178.18 7782 SCTP stackname unifun
+sctp association create fwassoc4 SERVER unifun4 10.124.178.18 7783 SCTP stackname unifun
 sctp server start unifun1 stackname unifun
 sctp server start unifun2 stackname unifun
 sctp server start unifun3 stackname unifun

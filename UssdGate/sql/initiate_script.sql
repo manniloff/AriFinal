@@ -62,10 +62,10 @@ CREATE TABLE `ss_route_rule` (
 
 
 -- Insert some sample data
-INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'serviceCenter', '998970000010');
-INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'opc', '13076');
-INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'dpc', '13259');
-INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'opcssn', '6');
+INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'serviceCenter', '237660001325');
+INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'opc', '1325');
+INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'dpc', '1051');
+INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'opcssn', '147');
 INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'dpcssn', '6');
 INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'gtType', 'GT0100');
 INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'gtNatureOfAddress', 'INTERNATIONAL');
@@ -79,10 +79,10 @@ INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('http', 're
 INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('app', 'threads', '1000');
 INSERT INTO `ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('app', 'forwardFailure', 'false');
 
-INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('map', 'serviceCenter', '998970000010');
-INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('map', 'opc', '13106');
-INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('map', 'dpc', '13269');
-INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('map', 'opcssn', '6');
+INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('map', 'serviceCenter', '237660001325');
+INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('map', 'opc', '1326');
+INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('map', 'dpc', '2051');
+INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('map', 'opcssn', '147');
 INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('map', 'dpcssn', '6');
 INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('map', 'gtType', 'GT0100');
 INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('map', 'gtNatureOfAddress', 'INTERNATIONAL');
@@ -96,7 +96,9 @@ INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('http', 'r
 INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('app', 'threads', '1000');
 INSERT INTO `ussdgate_settings2` (`st_type`, `name`, `value`) VALUES ('app', 'forwardFailure', 'false');
 
-INSERT INTO `ss_route_rule` (`destination_address`, `protocol_type`, `service_code`, `ussd_text`, `proxy_mode`) VALUES ('http://127.0.0.1:7080/UssdGate/test', 'HTTP', '178', '*178#', '0');
+INSERT INTO `ss_route_rule` (`destination_address`, `protocol_type`, `service_code`, `ussd_text`, `proxy_mode`) VALUES ('http://127.0.0.1:7080/UssdGate/test', 'HTTP', '068', '*068#', '0');
+INSERT INTO `ss_route_rule` (`destination_address`, `protocol_type`, `service_code`, `ussd_text`, `proxy_mode`) VALUES ('http://127.0.0.1:7080/UssdGate/test', 'HTTP', '801', '*801#', '0');
+INSERT INTO `ss_route_rule` (`destination_address`, `protocol_type`, `service_code`, `ussd_text`, `proxy_mode`) VALUES ('http://127.0.0.1:7080/UssdGate/test', 'HTTP', '8605', '*8605#', '0');
 
 DELIMITER ;;
 CREATE PROCEDURE `store_mapMsg`(
