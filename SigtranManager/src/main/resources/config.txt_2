@@ -99,9 +99,8 @@ sccp address create 4 16 13269 0 0 1 4 998/*
 #sccp rule show id <id> stackname <stack-name>
 #sccp rule delete <id> stackname <stack-name>
 #sccp rule create <id> <mask> <address-indicator> <point-code> <subsystem-number> <translation-type> <numbering-plan> <nature-of-address-indicator> <digits> <ruleType> <primary-address-id> backup-addressid <backup-address-id> loadsharing-algo <loadsharing-algorithm> newcgparty-addressid <new-callingPartyAddress-id> origination-type <originationType> stackname <stack-name>
-sccp rule create 1 K 16 0 0 0 1 4 998970000010 solitary 1 backup-addressid 2 loadsharing-algo bit3 origination-type remoteOriginated stackname unifun
-sccp rule create 2 R/K 16 0 0 0 1 4 998/* solitary 3 backup-addressid 4 loadsharing-algo bit3 origination-type localOriginated stackname unifun
-
+sccp rule create 1 K 16 0 0 0 1 4 998970000010 loadshared 1 backup-addressid 2 loadsharing-algo bit0 origination-type remoteOriginated stackname unifun
+sccp rule create 2 R/K 16 0 0 0 1 4 998/* loadshared 3 backup-addressid 4 loadsharing-algo bit0 origination-type localOriginated stackname unifun
 #sccp lmr delete <id> stackname <stack-name>
 #sccp lmr modify <id> <first-spc> <last-spc> <long-message-rule-type> stackname <stack-name>
 #sccp lmr create <id> <first-spc> <last-spc> <long-message-rule-type> stackname <stack-name>
@@ -140,8 +139,8 @@ sctp association create fwassoc1 CLIENT 10.160.9.11 7780 10.160.9.12 7780 SCTP s
 sctp association create fwassoc2 CLIENT 10.160.9.13 7780 10.160.9.14 7780 SCTP stackname unifun
 sctp association create fwassoc3 CLIENT 10.160.9.11 7781 10.160.9.12 7781 SCTP stackname unifun
 sctp association create fwassoc4 CLIENT 10.160.9.13 7781 10.160.9.14 7781 SCTP stackname unifun
-m3ua as create FWAS1 IPSP mode SE ipspType client rc 0 traffic-mode loadshare stackname unifun
-m3ua as create FWAS2 IPSP mode SE ipspType client rc 0 traffic-mode loadshare stackname unifun
+m3ua as create FWAS1 IPSP mode SE ipspType server rc 0 traffic-mode loadshare stackname unifun
+m3ua as create FWAS2 IPSP mode SE ipspType server rc 0 traffic-mode loadshare stackname unifun
 m3ua asp create FWASP1 fwassoc1 heartbeat false stackname unifun
 m3ua asp create FWASP2 fwassoc2 heartbeat false stackname unifun
 m3ua asp create FWASP3 fwassoc3 heartbeat false stackname unifun
