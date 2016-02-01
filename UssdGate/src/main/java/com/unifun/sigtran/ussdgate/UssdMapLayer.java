@@ -470,7 +470,10 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 			dpc = getAvailableDPC();
 			if (dpc == -1)
 				throw new Exception("All routed remote DPC is in pause state.");
-		}
+			if (mapSettings.containsKey("dstServiceCenter")){
+				msisdn = mapSettings.get("dstServiceCenter");
+			}
+		}		
 		if(msisdn == null){
 			msisdn = mapSettings.get("serviceCenter");
 		}

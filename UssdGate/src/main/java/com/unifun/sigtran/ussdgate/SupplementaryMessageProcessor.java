@@ -352,7 +352,7 @@ public class SupplementaryMessageProcessor implements Runnable{
 				ex.printStackTrace();
 			}
 			sendussmessage(response);
-		} catch (IOException | URISyntaxException e) {
+		} catch (Exception e) {
 			logger.warn("Some error ocuring during http transfer: " + e.getMessage());
 			if("true".equalsIgnoreCase(this.mapLayer.getAppSettings().get("app").get("forwardFailure"))){
 				logger.warn("Unable to get response from remote communication node.");
@@ -440,10 +440,9 @@ public class SupplementaryMessageProcessor implements Runnable{
 	 * @param ussdtext
 	 * @param msisdn
 	 * @param serviceCode 
-	 * @throws IOException 
-	 * @throws URISyntaxException  
+	 * @throws Exception 
 	 */
-	private UssMessage doHttpExchange(UssMessage ussMsg, String destination) throws IOException, URISyntaxException {
+	private UssMessage doHttpExchange(UssMessage ussMsg, String destination) throws Exception {
 		String dialogId,ussdtext,msisdn,serviceCode;
 		try {
 			dialogId = URLEncoder.encode(Long.toString(ussMsg.getDialogId()), "UTF-8");		
@@ -460,54 +459,60 @@ public class SupplementaryMessageProcessor implements Runnable{
 			e.printStackTrace();
 			return ussMsg;
 		}
+		
 		String url = String.format("%s?dialog_id=%s&ussd_text=%s&msisdn=%s&service_code=%s",destination,dialogId,ussdtext,msisdn,serviceCode);
 		URL urlObj = new URL(url);
 		logger.info("Call URL :" + urlObj.toURI());
 		HttpURLConnection con = (HttpURLConnection) urlObj.openConnection();
-		con.setRequestMethod("GET");
-		con.setConnectTimeout(resptimeout);
-		//con.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:17.0) Gecko/20100101 Firefox/17.0");
-		int responseCode = con.getResponseCode();		
-		String respCharset = con.getHeaderField("charset");
-		String respDialogId = con.getHeaderField("dialog_id");
-		String respMsgTye =	con.getHeaderField("message_type");
-		String respMsisdn =	con.getHeaderField("msisdn");
-		String respUssdText= con.getHeaderField("ussd_text");
-		String respServiceCode = con.getHeaderField("service_code");
-		con.disconnect();		
 		try{
-			ussMsg.setCharset(URLDecoder.decode(respCharset, "UTF-8"));			
-			switch(URLDecoder.decode(respMsgTye, "UTF-8")){
-			case "TCAP Continue":
-				ussMsg.setMessageType(MAPMessageType.unstructuredSSRequest_Request.name());
-				break;
-			case "TCAP End":
-				ussMsg.setMessageType(MAPMessageType.processUnstructuredSSRequest_Response.name());
-				break;
-			case "processUnstructuredSSRequest_Response":
-				ussMsg.setMessageType(MAPMessageType.processUnstructuredSSRequest_Response.name());
-				break;
-			case "unstructuredSSRequest_Request":
-				ussMsg.setMessageType(MAPMessageType.unstructuredSSRequest_Request.name());
-				break;
-			default:
-				throw new UnsupportedEncodingException("Unsuported mesage type please use (\"TCAP Continue\" or  \"TCAP End\")");
+			con.setRequestMethod("GET");
+			con.setConnectTimeout(resptimeout);
+			//con.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:17.0) Gecko/20100101 Firefox/17.0");
+			int responseCode = con.getResponseCode();		
+			String respCharset = con.getHeaderField("charset");
+			String respDialogId = con.getHeaderField("dialog_id");
+			String respMsgTye =	con.getHeaderField("message_type");
+			String respMsisdn =	con.getHeaderField("msisdn");
+			String respUssdText= con.getHeaderField("ussd_text");
+			String respServiceCode = con.getHeaderField("service_code");
+			con.disconnect();		
+			try{
+				ussMsg.setCharset(URLDecoder.decode(respCharset, "UTF-8"));			
+				switch(URLDecoder.decode(respMsgTye, "UTF-8")){
+				case "TCAP Continue":
+					ussMsg.setMessageType(MAPMessageType.unstructuredSSRequest_Request.name());
+					break;
+				case "TCAP End":
+					ussMsg.setMessageType(MAPMessageType.processUnstructuredSSRequest_Response.name());
+					break;
+				case "processUnstructuredSSRequest_Response":
+					ussMsg.setMessageType(MAPMessageType.processUnstructuredSSRequest_Response.name());
+					break;
+				case "unstructuredSSRequest_Request":
+					ussMsg.setMessageType(MAPMessageType.unstructuredSSRequest_Request.name());
+					break;
+				default:
+					throw new UnsupportedEncodingException("Unsuported mesage type please use (\"TCAP Continue\" or  \"TCAP End\")");
+				}
+
+				ussMsg.setUssdText(URLDecoder.decode(respUssdText, "UTF-8"));
+				//to make sure that we receive this parameters 
+				URLDecoder.decode(respDialogId, "UTF-8");
+				URLDecoder.decode(respMsisdn, "UTF-8"); 
+				URLDecoder.decode(respServiceCode, "UTF-8"); 
+			}catch (Exception e) {
+				logger.warn("Some error ocure while decoding http response parameters from headers: "+e.getMessage());
+				ussMsg.setUssdText("Some error ocure during information exchange, please try again later");
+				ussMsg.setInTimeStamp(null);
+				ussMsg.setOutTimeStamp(new Timestamp(new Date().getTime()));
+				ussMsg.setCharset("15");		
+				ussMsg.setMessageType("Error");
+				e.printStackTrace();
+				return ussMsg;
 			}
-			
-			ussMsg.setUssdText(URLDecoder.decode(respUssdText, "UTF-8"));
-			//to make sure that we receive this parameters 
-			URLDecoder.decode(respDialogId, "UTF-8");
-			URLDecoder.decode(respMsisdn, "UTF-8"); 
-			URLDecoder.decode(respServiceCode, "UTF-8"); 
-		}catch (Exception e) {
-			logger.warn("Some error ocure while decoding http response parameters from headers: "+e.getMessage());
-			ussMsg.setUssdText("Some error ocure during information exchange, please try again later");
-			ussMsg.setInTimeStamp(null);
-			ussMsg.setOutTimeStamp(new Timestamp(new Date().getTime()));
-			ussMsg.setCharset("15");		
-			ussMsg.setMessageType("Error");
-			e.printStackTrace();
-			return ussMsg;
+		}catch(Exception e){
+			con.disconnect();
+			throw new Exception(e);
 		}
 		//TODO write response to vas logs ?????
 		return ussMsg;
