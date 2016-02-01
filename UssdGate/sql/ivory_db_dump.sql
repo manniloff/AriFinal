@@ -1,12 +1,8 @@
 CREATE DATABASE  IF NOT EXISTS `ussdgate` /*!40100 DEFAULT CHARACTER SET latin1 */;
-
-grant all on ussdgate.* to ussdgate@'localhost' identified by 'ussdgate';
-grant all on ussdgate.* to ussdgate@'127.0.0.1' identified by 'ussdgate';
-
 USE `ussdgate`;
 -- MySQL dump 10.13  Distrib 5.6.17, for Win32 (x86)
 --
--- Host: 127.0.0.1    Database: UssdGateDb
+-- Host: 127.0.0.1    Database: ussdgate
 -- ------------------------------------------------------
 -- Server version	5.5.44-0ubuntu0.14.04.1-log
 
@@ -38,7 +34,7 @@ CREATE TABLE `ss_map_message_log` (
   `dialog_id` bigint(20) NOT NULL,
   `msisdn` bigint(20) NOT NULL,
   `ussd_text` varchar(255) COLLATE utf8_bin DEFAULT NULL,
-  `service_code` varchar(50) COLLATE utf8_bin NOT NULL,
+  `service_code` varchar(50) COLLATE utf8_bin DEFAULT NULL,
   `message_type` enum('processUnstructuredSSRequest_Request','processUnstructuredSSRequest_Response','unstructuredSSRequest_Request','unstructuredSSRequest_Response','unstructuredSSNotify_Request','unstructuredSSNotify_Response','UnstructuredSSResponse') COLLATE utf8_bin DEFAULT NULL,
   `source` enum('http','map','app') COLLATE utf8_bin DEFAULT NULL,
   `initial_dialog_id` bigint(20) DEFAULT NULL,
@@ -46,17 +42,8 @@ CREATE TABLE `ss_map_message_log` (
   KEY `dialog_id` (`dialog_id`,`message_type`),
   KEY `initial_dialog_id` (`initial_dialog_id`),
   KEY `msisdn` (`msisdn`,`message_type`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ss_map_message_log`
---
-
-LOCK TABLES `ss_map_message_log` WRITE;
-/*!40000 ALTER TABLE `ss_map_message_log` DISABLE KEYS */;
-/*!40000 ALTER TABLE `ss_map_message_log` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `ss_route_rule`
@@ -117,7 +104,7 @@ INSERT INTO `ussdgate_settings` VALUES (1,'map','serviceCenter','22566098088'),(
 UNLOCK TABLES;
 
 --
--- Dumping routines for database 'UssdGateDb'
+-- Dumping routines for database 'ussdgate'
 --
 /*!50003 DROP PROCEDURE IF EXISTS `store_mapMsg` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -189,4 +176,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-01-25 10:37:43
+-- Dump completed on 2016-02-01 12:08:29

@@ -98,21 +98,21 @@ CREATE TABLE `ss_route_rule` (
 
 
 -- Insert some sample data
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'serviceCenter', '99366399113');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'opc', '509');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'dpc', '6110');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'opcssn', '8');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'dpcssn', '8');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'gtType', 'GT0100');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'gtNatureOfAddress', 'INTERNATIONAL');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'gtTranslationType', '0');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'gtNumberingPlan', 'ISDN_TELEPHONY');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'routingIndicator', 'ROUTING_BASED_ON_GLOBAL_TITLE');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'addressIndicator', '16');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('db', 'mapMsgWrProc', 'store_mapMsg');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('db', 'routingRuleTable', 'ss_route_rule');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('http', 'resptimeout', '10000');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('app', 'threads', '1000');
-INSERT INTO `ussdgatedb`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('app', 'forwardFailure', 'false');
+INSERT INTO `ussdgate`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'serviceCenter', '99366399113');
+INSERT INTO `ussdgate`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'opc', '509');
+INSERT INTO `ussdgate`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'dpc', '6110');
+INSERT INTO `ussdgate`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'opcssn', '8');
+INSERT INTO `ussdgate`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'dpcssn', '8');
+INSERT INTO `ussdgate`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'gtType', 'GT0100');
+INSERT INTO `ussdgate`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'gtNatureOfAddress', 'INTERNATIONAL');
+INSERT INTO `ussdgate`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'gtTranslationType', '0');
+INSERT INTO `ussdgate`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'gtNumberingPlan', 'ISDN_TELEPHONY');
+INSERT INTO `ussdgate`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'routingIndicator', 'ROUTING_BASED_ON_GLOBAL_TITLE');
+INSERT INTO `ussdgate`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('map', 'addressIndicator', '16');
+INSERT INTO `ussdgate`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('db', 'mapMsgWrProc', 'store_mapMsg');
+INSERT INTO `ussdgate`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('db', 'routingRuleTable', 'ss_route_rule');
+INSERT INTO `ussdgate`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('http', 'resptimeout', '10000');
+INSERT INTO `ussdgate`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('app', 'threads', '1000');
+INSERT INTO `ussdgate`.`ussdgate_settings` (`st_type`, `name`, `value`) VALUES ('app', 'forwardFailure', 'false');
 
-INSERT INTO `ussdgatedb`.`ss_route_rule` (`destination_address`, `protocol_type`, `service_code`, `ussd_text`, `proxy_mode`) VALUES ('http://127.0.0.1:7080/UssdGate/test', 'HTTP', '#444#', '#444#', '0');
+INSERT INTO `ussdgate`.`ss_route_rule` (`destination_address`, `protocol_type`, `service_code`, `ussd_text`, `proxy_mode`) VALUES ('http://127.0.0.1:7080/UssdGate/test', 'HTTP', '#444#', '#444#', '0');

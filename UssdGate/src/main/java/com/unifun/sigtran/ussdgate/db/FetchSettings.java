@@ -27,11 +27,13 @@ public class FetchSettings {
 	static final Logger logger = LoggerFactory.getLogger(String.format("[%1$-15s] %2$s", FetchSettings.class.getSimpleName(), ""));
 	private DataSource dataSource;
 	//TODO make table name configurable
-	private final String settingsGroupsQuerry = "select st_type from ussdgate_settings group by st_type";
-	private final String fetchSettingsQuerry = "select name, value from ussdgate_settings where st_type='%s'";
+	private String settingsGroupsQuerry;
+	private String fetchSettingsQuerry; 
 	
-	public FetchSettings(DataSource dataSource) {
-		this.dataSource = dataSource;
+	public FetchSettings(DataSource dataSource, String tableName) {
+		this.dataSource = dataSource;	
+		this.settingsGroupsQuerry = "select st_type from "+tableName+" group by st_type";
+		this.fetchSettingsQuerry = "select name, value from "+tableName+" where st_type='%s'";
 	}
 	
 	private List<String> getSettingsGroups() throws SQLException{

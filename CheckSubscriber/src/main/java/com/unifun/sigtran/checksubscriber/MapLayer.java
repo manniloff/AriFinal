@@ -35,8 +35,14 @@ import org.mobicents.protocols.ss7.map.api.primitives.MAPExtensionContainer;
 import org.mobicents.protocols.ss7.map.api.primitives.NumberingPlan;
 import org.mobicents.protocols.ss7.map.api.service.mobility.MAPDialogMobility;
 import org.mobicents.protocols.ss7.map.api.service.mobility.MAPServiceMobilityListener;
+import org.mobicents.protocols.ss7.map.api.service.mobility.authentication.AuthenticationFailureReportRequest;
+import org.mobicents.protocols.ss7.map.api.service.mobility.authentication.AuthenticationFailureReportResponse;
 import org.mobicents.protocols.ss7.map.api.service.mobility.authentication.SendAuthenticationInfoRequest;
 import org.mobicents.protocols.ss7.map.api.service.mobility.authentication.SendAuthenticationInfoResponse;
+import org.mobicents.protocols.ss7.map.api.service.mobility.faultRecovery.ForwardCheckSSIndicationRequest;
+import org.mobicents.protocols.ss7.map.api.service.mobility.faultRecovery.ResetRequest;
+import org.mobicents.protocols.ss7.map.api.service.mobility.faultRecovery.RestoreDataRequest;
+import org.mobicents.protocols.ss7.map.api.service.mobility.faultRecovery.RestoreDataResponse;
 import org.mobicents.protocols.ss7.map.api.service.mobility.imei.CheckImeiRequest;
 import org.mobicents.protocols.ss7.map.api.service.mobility.imei.CheckImeiResponse;
 import org.mobicents.protocols.ss7.map.api.service.mobility.locationManagement.CancelLocationRequest;
@@ -49,12 +55,16 @@ import org.mobicents.protocols.ss7.map.api.service.mobility.locationManagement.U
 import org.mobicents.protocols.ss7.map.api.service.mobility.locationManagement.UpdateGprsLocationResponse;
 import org.mobicents.protocols.ss7.map.api.service.mobility.locationManagement.UpdateLocationRequest;
 import org.mobicents.protocols.ss7.map.api.service.mobility.locationManagement.UpdateLocationResponse;
+import org.mobicents.protocols.ss7.map.api.service.mobility.oam.ActivateTraceModeRequest_Mobility;
+import org.mobicents.protocols.ss7.map.api.service.mobility.oam.ActivateTraceModeResponse_Mobility;
 import org.mobicents.protocols.ss7.map.api.service.mobility.subscriberInformation.AnyTimeInterrogationRequest;
 import org.mobicents.protocols.ss7.map.api.service.mobility.subscriberInformation.AnyTimeInterrogationResponse;
 import org.mobicents.protocols.ss7.map.api.service.mobility.subscriberInformation.DomainType;
 import org.mobicents.protocols.ss7.map.api.service.mobility.subscriberInformation.ProvideSubscriberInfoRequest;
 import org.mobicents.protocols.ss7.map.api.service.mobility.subscriberInformation.ProvideSubscriberInfoResponse;
 import org.mobicents.protocols.ss7.map.api.service.mobility.subscriberInformation.RequestedInfo;
+import org.mobicents.protocols.ss7.map.api.service.mobility.subscriberManagement.DeleteSubscriberDataRequest;
+import org.mobicents.protocols.ss7.map.api.service.mobility.subscriberManagement.DeleteSubscriberDataResponse;
 import org.mobicents.protocols.ss7.map.api.service.mobility.subscriberManagement.InsertSubscriberDataRequest;
 import org.mobicents.protocols.ss7.map.api.service.mobility.subscriberManagement.InsertSubscriberDataResponse;
 import org.mobicents.protocols.ss7.map.api.service.sms.AlertServiceCentreRequest;
@@ -68,6 +78,9 @@ import org.mobicents.protocols.ss7.map.api.service.sms.MoForwardShortMessageRequ
 import org.mobicents.protocols.ss7.map.api.service.sms.MoForwardShortMessageResponse;
 import org.mobicents.protocols.ss7.map.api.service.sms.MtForwardShortMessageRequest;
 import org.mobicents.protocols.ss7.map.api.service.sms.MtForwardShortMessageResponse;
+import org.mobicents.protocols.ss7.map.api.service.sms.NoteSubscriberPresentRequest;
+import org.mobicents.protocols.ss7.map.api.service.sms.ReadyForSMRequest;
+import org.mobicents.protocols.ss7.map.api.service.sms.ReadyForSMResponse;
 import org.mobicents.protocols.ss7.map.api.service.sms.ReportSMDeliveryStatusRequest;
 import org.mobicents.protocols.ss7.map.api.service.sms.ReportSMDeliveryStatusResponse;
 import org.mobicents.protocols.ss7.map.api.service.sms.SMDeliveryOutcome;
@@ -709,6 +722,123 @@ public class MapLayer implements MAPDialogListener, MAPServiceSmsListener, MAPSe
 
 	public MapMessagesCache getMapMessageCache() {
 		return mapMessageCache;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.mobility.MAPServiceMobilityListener#onAuthenticationFailureReportRequest(org.mobicents.protocols.ss7.map.api.service.mobility.authentication.AuthenticationFailureReportRequest)
+	 */
+	@Override
+	public void onAuthenticationFailureReportRequest(AuthenticationFailureReportRequest ind) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.mobility.MAPServiceMobilityListener#onAuthenticationFailureReportResponse(org.mobicents.protocols.ss7.map.api.service.mobility.authentication.AuthenticationFailureReportResponse)
+	 */
+	@Override
+	public void onAuthenticationFailureReportResponse(AuthenticationFailureReportResponse ind) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.mobility.MAPServiceMobilityListener#onResetRequest(org.mobicents.protocols.ss7.map.api.service.mobility.faultRecovery.ResetRequest)
+	 */
+	@Override
+	public void onResetRequest(ResetRequest ind) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.mobility.MAPServiceMobilityListener#onForwardCheckSSIndicationRequest(org.mobicents.protocols.ss7.map.api.service.mobility.faultRecovery.ForwardCheckSSIndicationRequest)
+	 */
+	@Override
+	public void onForwardCheckSSIndicationRequest(ForwardCheckSSIndicationRequest ind) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.mobility.MAPServiceMobilityListener#onRestoreDataRequest(org.mobicents.protocols.ss7.map.api.service.mobility.faultRecovery.RestoreDataRequest)
+	 */
+	@Override
+	public void onRestoreDataRequest(RestoreDataRequest ind) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.mobility.MAPServiceMobilityListener#onRestoreDataResponse(org.mobicents.protocols.ss7.map.api.service.mobility.faultRecovery.RestoreDataResponse)
+	 */
+	@Override
+	public void onRestoreDataResponse(RestoreDataResponse ind) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.mobility.MAPServiceMobilityListener#onDeleteSubscriberDataRequest(org.mobicents.protocols.ss7.map.api.service.mobility.subscriberManagement.DeleteSubscriberDataRequest)
+	 */
+	@Override
+	public void onDeleteSubscriberDataRequest(DeleteSubscriberDataRequest request) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.mobility.MAPServiceMobilityListener#onDeleteSubscriberDataResponse(org.mobicents.protocols.ss7.map.api.service.mobility.subscriberManagement.DeleteSubscriberDataResponse)
+	 */
+	@Override
+	public void onDeleteSubscriberDataResponse(DeleteSubscriberDataResponse request) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.mobility.MAPServiceMobilityListener#onActivateTraceModeRequest_Mobility(org.mobicents.protocols.ss7.map.api.service.mobility.oam.ActivateTraceModeRequest_Mobility)
+	 */
+	@Override
+	public void onActivateTraceModeRequest_Mobility(ActivateTraceModeRequest_Mobility ind) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.mobility.MAPServiceMobilityListener#onActivateTraceModeResponse_Mobility(org.mobicents.protocols.ss7.map.api.service.mobility.oam.ActivateTraceModeResponse_Mobility)
+	 */
+	@Override
+	public void onActivateTraceModeResponse_Mobility(ActivateTraceModeResponse_Mobility ind) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.sms.MAPServiceSmsListener#onReadyForSMRequest(org.mobicents.protocols.ss7.map.api.service.sms.ReadyForSMRequest)
+	 */
+	@Override
+	public void onReadyForSMRequest(ReadyForSMRequest request) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.sms.MAPServiceSmsListener#onReadyForSMResponse(org.mobicents.protocols.ss7.map.api.service.sms.ReadyForSMResponse)
+	 */
+	@Override
+	public void onReadyForSMResponse(ReadyForSMResponse response) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see org.mobicents.protocols.ss7.map.api.service.sms.MAPServiceSmsListener#onNoteSubscriberPresentRequest(org.mobicents.protocols.ss7.map.api.service.sms.NoteSubscriberPresentRequest)
+	 */
+	@Override
+	public void onNoteSubscriberPresentRequest(NoteSubscriberPresentRequest request) {
+		// TODO Auto-generated method stub
+		
 	}
 }
 
