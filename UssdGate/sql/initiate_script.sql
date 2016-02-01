@@ -1,9 +1,9 @@
-create database UssdGateDb;
+create database ussdgate;
 
-grant all on UssdGateDb.* to ussdgate@'localhost' identified by 'ussdgate';
-grant all on UssdGateDb.* to ussdgate@'127.0.0.1' identified by 'ussdgate';
+grant all on ussdgate.* to ussdgate@'localhost' identified by 'ussdgate';
+grant all on ussdgate.* to ussdgate@'127.0.0.1' identified by 'ussdgate';
 
-use UssdGateDb;
+use ussdgate;
 
 create table ussdgate_settings (
 id int  NOT NULL AUTO_INCREMENT,

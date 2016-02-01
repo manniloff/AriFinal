@@ -1,5 +1,9 @@
-CREATE DATABASE  IF NOT EXISTS `UssdGateDb` /*!40100 DEFAULT CHARACTER SET latin1 */;
-USE `UssdGateDb`;
+CREATE DATABASE  IF NOT EXISTS `ussdgate` /*!40100 DEFAULT CHARACTER SET latin1 */;
+
+grant all on ussdgate.* to ussdgate@'localhost' identified by 'ussdgate';
+grant all on ussdgate.* to ussdgate@'127.0.0.1' identified by 'ussdgate';
+
+USE `ussdgate`;
 -- MySQL dump 10.13  Distrib 5.6.17, for Win32 (x86)
 --
 -- Host: 127.0.0.1    Database: UssdGateDb
