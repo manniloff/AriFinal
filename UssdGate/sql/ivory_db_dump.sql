@@ -99,7 +99,7 @@ CREATE TABLE `ussdgate_settings` (
 
 LOCK TABLES `ussdgate_settings` WRITE;
 /*!40000 ALTER TABLE `ussdgate_settings` DISABLE KEYS */;
-INSERT INTO `ussdgate_settings` VALUES (1,'map','serviceCenter','22566098088'),(2,'map','opc','735'),(3,'map','dpc','700'),(4,'map','opcssn','8'),(5,'map','dpcssn','6'),(6,'map','gtType','GT0100'),(7,'map','gtNatureOfAddress','INTERNATIONAL'),(8,'map','gtTranslationType','0'),(9,'map','gtNumberingPlan','ISDN_TELEPHONY'),(10,'map','routingIndicator','ROUTING_BASED_ON_GLOBAL_TITLE'),(11,'db','mapMsgWrProc','store_mapMsg'),(12,'db','routingRuleTable','ss_route_rule'),(13,'http','resptimeout','10000'),(14,'app','threads','1000'),(15,'app','forwardFailure','false');
+INSERT INTO `ussdgate_settings` VALUES (1,'map','serviceCenter','22566098088'),(2,'map','opc','735'),(3,'map','dpc','700'),(4,'map','opcssn','8'),(5,'map','dpcssn','7'),(6,'map','gtType','GT0100'),(7,'map','gtNatureOfAddress','INTERNATIONAL'),(8,'map','gtTranslationType','0'),(9,'map','gtNumberingPlan','ISDN_TELEPHONY'),(10,'map','routingIndicator','ROUTING_BASED_ON_GLOBAL_TITLE'),(11,'db','mapMsgWrProc','store_mapMsg'),(12,'db','routingRuleTable','ss_route_rule'),(13,'http','resptimeout','10000'),(14,'app','threads','1000'),(15,'app','forwardFailure','false');
 /*!40000 ALTER TABLE `ussdgate_settings` ENABLE KEYS */;
 UNLOCK TABLES;
 

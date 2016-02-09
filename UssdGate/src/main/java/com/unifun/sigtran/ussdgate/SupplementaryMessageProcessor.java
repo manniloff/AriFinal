@@ -343,9 +343,9 @@ public class SupplementaryMessageProcessor implements Runnable{
 			response.setInTimeStamp(null);
 			response.setOutTimeStamp(new Timestamp(new Date().getTime()));
 			if ("Error".equalsIgnoreCase(response.getMessageType()))
-				throw new IOException("Some error ocure in http transfer");			
-			try{				MapMsgDbWriter dbWriter = new MapMsgDbWriter(ds, ussMsg, mapWriterProcName);
-				
+				throw new Exception("Some error ocure in http transfer");			
+			try{				
+				MapMsgDbWriter dbWriter = new MapMsgDbWriter(ds, ussMsg, mapWriterProcName);				
 				dbWrk.execute(dbWriter);
 			}catch(Exception ex){
 				logger.error("Failed to store Supplementary Message to db: "+ex.getMessage());
@@ -467,6 +467,7 @@ public class SupplementaryMessageProcessor implements Runnable{
 		try{
 			con.setRequestMethod("GET");
 			con.setConnectTimeout(resptimeout);
+			con.setReadTimeout(resptimeout);
 			//con.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:17.0) Gecko/20100101 Firefox/17.0");
 			int responseCode = con.getResponseCode();		
 			String respCharset = con.getHeaderField("charset");
@@ -512,6 +513,7 @@ public class SupplementaryMessageProcessor implements Runnable{
 			}
 		}catch(Exception e){
 			con.disconnect();
+			logger.warn("Some error during http comunication: " + e.getMessage());
 			throw new Exception(e);
 		}
 		//TODO write response to vas logs ?????

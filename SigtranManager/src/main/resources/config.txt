@@ -79,7 +79,7 @@ sccp rsp create 1 700 0 0 stackname unifun
 #sccp rss delete <id> stackname <stack-name>
 #sccp rss modify <id> <remote-spc> <remote-ssn> <rss-flag> prohibitedwhenspcresuming <mark-prohibited-when-spc-resuming> stackname <stack-name>
 #sccp rss create <id> <remote-spc> <remote-ssn> <rss-flag> prohibitedwhenspcresuming <mark-prohibited-when-spc-resuming> stackname <stack-name>
-sccp rss create 1 700 8 0 stackname unifun
+sccp rss create 1 700 7 0 stackname unifun
 
 #sccp address show id <id> stackname <stack-name>
 #sccp address delete <id> stackname <stack-name>
@@ -90,8 +90,8 @@ sccp address create 2 16 700 0 0 1 4 225/*
 #sccp rule show id <id> stackname <stack-name>
 #sccp rule delete <id> stackname <stack-name>
 #sccp rule create <id> <mask> <address-indicator> <point-code> <subsystem-number> <translation-type> <numbering-plan> <nature-of-address-indicator> <digits> <ruleType> <primary-address-id> backup-addressid <backup-address-id> loadsharing-algo <loadsharing-algorithm> newcgparty-addressid <new-callingPartyAddress-id> origination-type <originationType> stackname <stack-name>
-sccp rule create 1 K 16 0 0 0 1 4 22566098088 solitary 1 stackname unifun
-sccp rule create 2 R/K 16 0 0 0 1 4 225/* solitary 2 stackname unifun
+sccp rule create 1 R 16 0 0 0 1 4 22566098088 solitary 1 origination-type remoteOriginated stackname unifun
+sccp rule create 2 R/K 16 0 0 0 1 4 225/* solitary 2 origination-type localOriginated stackname unifun
 
 #sccp lmr delete <id> stackname <stack-name>
 #sccp lmr modify <id> <first-spc> <last-spc> <long-message-rule-type> stackname <stack-name>
@@ -105,13 +105,13 @@ sccp rule create 2 R/K 16 0 0 0 1 4 225/* solitary 2 stackname unifun
 ##TCAP
 #tcap init <ssn>
 tcap init 8
+tcap start
 #tcap timeout <value in milliseconds>
 tcap timeout 30000
 #tcap maxdialogs <value>
 tcap maxdialogs 10000
 #tcap dialogidletimeout <value in milliseconds>
 tcap dialogidletimeout 120000
-tcap start
 #tcap stop
 
 ##MAP

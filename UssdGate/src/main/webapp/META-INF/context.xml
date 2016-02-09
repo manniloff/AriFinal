@@ -11,7 +11,7 @@
 		factory="org.apache.tomcat.jdbc.pool.DataSourceFactory"
 		jdbcInterceptors="org.apache.tomcat.jdbc.pool.interceptor.ConnectionState;org.apache.tomcat.jdbc.pool.interceptor.StatementFinalizer;org.apache.tomcat.jdbc.pool.interceptor.ResetAbandonedTimer"
 		initialSize="3"
-		maxActive="1000"
+		maxActive="200"
 		maxWait="10000"
 		minEvictableIdleTimeMillis="30000"
 		minIdle="10"

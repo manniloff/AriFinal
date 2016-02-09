@@ -22,7 +22,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -114,14 +116,15 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 	private Set<Long> httpdialogs = new HashSet<>();
 	private DataSource ds;
 	private ExecutorService dbWorker;
+	private ScheduledExecutorService sched = Executors.newScheduledThreadPool(1);
 	//private ExecutorService appWorker;
 	private ForkJoinPool appWorker;
 	private Map<String, Map<String,String>> appSettings = null;
 	//private transient Map<Long, UssMessage> ussMessages = new HashMap<>();
 	private transient FastMap<Long, UssMessage> ussMessages = new FastMap<Long, UssMessage>();
 	//
-	//private ConcurrentHashMap<Long, Long> request = new ConcurrentHashMap<Long, Long>();
-	private FastMap<Long, Long> request = new FastMap<Long, Long>();
+	private ConcurrentHashMap<Long, Long> request = new ConcurrentHashMap<Long, Long>();
+	//private FastMap<Long, Long> request = new FastMap<Long, Long>();
 	//<generated dialogid, initial dialgid>
 	//private ConcurrentHashMap<Long, Long> mapRoutingdialogs = new ConcurrentHashMap<>();
 	private FastMap<Long, Long> mapRoutingdialogs = new FastMap<Long, Long>();
@@ -129,11 +132,11 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 //	private Map<String, SsRouteRules> rR = new HashMap<>();
 //	private Map<String, SsRouteRules> prR =  new HashMap<>();
 	//private ConcurrentHashMap<Long, Boolean> isEriStyle = new ConcurrentHashMap<>();
-	//private ConcurrentHashMap<Long, UssMessage> ussMsgRespnose = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<Long, UssMessage> ussMsgRespnose = new ConcurrentHashMap<>();
 	private FastMap<String, SsRouteRules> rR = new FastMap<>();
 	private FastMap<String, SsRouteRules> prR =  new FastMap<>();
 	private FastMap<Long, Boolean> isEriStyle = new FastMap<>();
-	private FastMap<Long, UssMessage> ussMsgRespnose = new FastMap<>();
+	//private FastMap<Long, UssMessage> ussMsgRespnose = new FastMap<>();
 	
 	/**
 	 * 
@@ -156,10 +159,30 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 		//Load routing rules from db
 		fetchRoutingRule(false);
 		fetchRoutingRule(true);
-		//TODO init scheduler that well check for modification in db, bad idea look for other way.
+		//init scheduler that well check for modification in db, bad idea look for other way.
+		_startSchde();
+	}
+	
+	private void _startSchde(){
+		logger.debug("Start Request amount scheduler");
+		final Runnable resetCounterTask = new Runnable() {
+		       public void run() { 
+		    	   //logger.debug("Reset counters");
+		    	   for (Long key : request.keySet()){
+		    		   request.put(key, 0l);
+		    	   }
+		    	   }
+		     };
+		try{
+		     sched.scheduleAtFixedRate(resetCounterTask, 1, 1, TimeUnit.SECONDS);
+		}catch (Exception e){
+			e.printStackTrace();
+			logger.error(e.getMessage());
+		}
 	}
 	
 	public void stop(){
+		sched.shutdown();
 		appWorker.shutdown();
 		this.mapProvider.removeMAPDialogListener(this);
 		this.mapProvider.getMAPServiceSupplementary().removeMAPServiceListener(this);
@@ -268,7 +291,7 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 			MAPDialogSupplementary dialog = (MAPDialogSupplementary) this.mapProvider.getMAPDialog(response.getDialogId());
 			long invokeId = response.getInvokeId();
 			logger.debug("Setting dialog invoke id to: "+ invokeId);
-			dialog.setUserObject(invokeId);    		
+			//dialog.setUserObject(invokeId);    		
 			ISDNAddressString msisdn = this.mapProvider.getMAPParameterFactory().createISDNAddressString(
 					AddressNature.international_number, NumberingPlan.ISDN, response.getMsisdn());
 			logger.debug("Send Dialog - "+ dialog);
@@ -669,9 +692,9 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 		
 		if(httpdialogs.contains(dialogId)){
 			httpdialogs.remove(dialogId);
-			if (ussMsgRespnose.containsKey(dialogId)){
-				ussMsgRespnose.remove(dialogId);
-			}
+//			if (ussMsgRespnose.containsKey(dialogId)){
+//				ussMsgRespnose.remove(dialogId);
+//			}
 			ssMapMsg.setSource("http");			
 			ussMsgRespnose.put(dialogId, ssMapMsg);
 			//Store to db incoming request
@@ -735,9 +758,9 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 		ssMapMsg.setInTimeStamp(new Timestamp(new Date().getTime()));
 		if(httpdialogs.contains(dialogId)){
 			httpdialogs.remove(dialogId);
-			if (ussMsgRespnose.containsKey(dialogId)){
-				ussMsgRespnose.remove(dialogId);
-			}
+//			if (ussMsgRespnose.containsKey(dialogId)){
+//				ussMsgRespnose.remove(dialogId);
+//			}
 			ssMapMsg.setSource("http");				
 			ussMsgRespnose.put(dialogId, ssMapMsg);
 			MapMsgDbWriter dbWriter = new MapMsgDbWriter(ds,ssMapMsg,appSettings.get("db").get("mapMsgWrProc"));
@@ -810,9 +833,9 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 		ssMapMsg.setInTimeStamp(new Timestamp(new Date().getTime()));
 		if(httpdialogs.contains(dialogId)){	
 			httpdialogs.remove(dialogId);
-			if (ussMsgRespnose.containsKey(dialogId)){
-				ussMsgRespnose.remove(dialogId);
-			}				
+//			if (ussMsgRespnose.containsKey(dialogId)){
+//				ussMsgRespnose.remove(dialogId);
+//			}				
 			ssMapMsg.setSource("http");				
 			ussMsgRespnose.put(dialogId, ssMapMsg);
 			MapMsgDbWriter dbWriter = new MapMsgDbWriter(ds,ssMapMsg,appSettings.get("db").get("mapMsgWrProc"));
@@ -968,7 +991,7 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 	public void onDialogClose(MAPDialog mapDialog) {
 		logger.debug(String.format("onDialogClose for  remote Dialog=%d, local Dialog=%d", mapDialog.getRemoteDialogId(),  mapDialog.getLocalDialogId()));
 		//TODO: terminate connection
-		_cleareDialogQueue(mapDialog.getLocalDialogId());
+		//_cleareDialogQueue(mapDialog.getLocalDialogId());
 	}
 
 
@@ -983,9 +1006,8 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 
 	@Override
 	public void onDialogRelease(MAPDialog mapDialog) {
-		logger.info(String.format("onDialogRelease for  remote Dialog=%d, local Dialog=%d", mapDialog.getLocalDialogId(),  mapDialog.getLocalDialogId()));
-		
-		_cleareDialogQueue(mapDialog.getLocalDialogId());
+		logger.info(String.format("onDialogRelease for  remote Dialog=%d, local Dialog=%d", mapDialog.getLocalDialogId(),  mapDialog.getLocalDialogId()));		
+		//_cleareDialogQueue(mapDialog.getLocalDialogId());
 
 	}
 
@@ -1092,7 +1114,8 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 		return subDialogs.get().getValue();
 	}
 
-	public FastMap<Long, UssMessage> getUssMsgRespnose() {
+	public ConcurrentHashMap<Long, UssMessage> getUssMsgRespnose() {
+	//	public FastMap<Long, UssMessage> getUssMsgRespnose() {
 		return ussMsgRespnose;
 	}
 
