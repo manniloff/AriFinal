@@ -739,6 +739,7 @@ class AlertHttpWorker implements Runnable{
 		HttpURLConnection con = (HttpURLConnection) urlObj.openConnection();
 		con.setRequestMethod("GET");
 		con.setConnectTimeout(10000);
+		con.setReadTimeout(10000);
 		//con.setRequestProperty("User-Agent", USER_AGENT);
 		int responseCode = con.getResponseCode();	
 		con.disconnect();		

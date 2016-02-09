@@ -6,7 +6,7 @@
 package com.unifun.sigtran.checksubscriber.servlets;
 
 import java.io.IOException;
-import java.io.PrintWriter;
+
 import javax.servlet.AsyncContext;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -14,10 +14,15 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-@WebServlet(name = "CheckSubscriber", urlPatterns = {"/LbsService"}, displayName = "Unifun Map Service", asyncSupported = true)
-public class LbsService extends HttpServlet {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-    /**
+@WebServlet(name = "CheckSubscriber", urlPatterns = {"/LbsService"}, displayName = "Unifun Map Service", asyncSupported = true)
+public class LbsService extends HttpServlet {	
+	private static final long serialVersionUID = -2650468725495483007L;
+	static final Logger logger = LoggerFactory.getLogger(String.format("[%1$-15s] %2$s", LbsService.class.getSimpleName(), ""));
+
+	/**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
      * methods.
      *
@@ -28,6 +33,7 @@ public class LbsService extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+    	logger.info("Incomming request: "+ request.getRequestURL());
         AsyncContext aContext = request.startAsync(request, response);
         CheckSubscriberWrk aMtd = new CheckSubscriberWrk();
         aMtd.setAsyncContext(aContext);
