@@ -33,7 +33,7 @@ public class LbsService extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-    	logger.info("Incomming request: "+ request.getRequestURL());
+    	logger.info("Incomming request: "+ request.getRequestURL()+"?"+request.getQueryString());
         AsyncContext aContext = request.startAsync(request, response);
         CheckSubscriberWrk aMtd = new CheckSubscriberWrk();
         aMtd.setAsyncContext(aContext);
