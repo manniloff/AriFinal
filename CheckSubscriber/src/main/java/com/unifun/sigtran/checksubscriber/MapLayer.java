@@ -503,6 +503,8 @@ public class MapLayer implements MAPDialogListener, MAPServiceSmsListener, MAPSe
     @Override
     public void onDialogTimeout(MAPDialog mapDialog) {
         logger.debug("[onDialogTimeout]: " + mapDialog);
+        long dialogId= mapDialog.getLocalDialogId();
+        mapMessageCache.clean(dialogId);
     }
 
     @Override
@@ -598,6 +600,9 @@ public class MapLayer implements MAPDialogListener, MAPServiceSmsListener, MAPSe
     public void onInvokeTimeout(MAPDialog mapDialog, Long invokeId) {
         logger.debug("[onInvokeTimeout]: " + mapDialog + " [invokeId]: " + invokeId);
         mapDialog.release();
+        long dialogId= mapDialog.getLocalDialogId();
+        mapMessageCache.clean(dialogId);
+        
     }
 
     @Override

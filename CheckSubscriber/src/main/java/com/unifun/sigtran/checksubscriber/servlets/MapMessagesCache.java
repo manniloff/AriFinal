@@ -60,4 +60,11 @@ public class MapMessagesCache {
 		}
 	}
 	
+	public void clean(long dialogid){
+		if (mapMessage.containsKey(dialogid))
+			mapMessage.remove(dialogid);
+		if (mapErrorMessage.containsKey(dialogid))
+			mapErrorMessage.remove(dialogid);
+	}
+	
 }
