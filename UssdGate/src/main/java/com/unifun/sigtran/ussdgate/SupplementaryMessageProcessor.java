@@ -109,8 +109,18 @@ public class SupplementaryMessageProcessor implements Runnable{
 			}
 			ussMsg.setServiceCode(serviceCode);
 			//Detect routing rule			
-			ussMsg.setRouteRule(rR.get(ussMsg.getUssdText()));			
-			ussMsg.setMaintenanceRouteRule(prR.get(ussMsg.getUssdText()));			
+			for (String s: rR.keySet()){
+				String pattern = s.replaceAll("\\*", "\\\\*");
+				pattern =  pattern.replace("%", ".*");
+				pattern = pattern.replace("?", ".");				
+				if (ussMsg.getUssdText().matches(pattern)){					
+					ussMsg.setRouteRule(rR.get(s));
+					ussMsg.setMaintenanceRouteRule(prR.get(s));
+					break;
+					}
+			}
+			//ussMsg.setRouteRule(rR.get(ussMsg.getUssdText()));			
+			//ussMsg.setMaintenanceRouteRule(prR.get(ussMsg.getUssdText()));			
 		}
 		else if (message instanceof UnstructuredSSRequest){
 			UnstructuredSSRequest ussr = (UnstructuredSSRequest)message;
@@ -330,7 +340,7 @@ public class SupplementaryMessageProcessor implements Runnable{
 		
 		}
 		long end_time = System.currentTimeMillis();
-		logger.debug("Processed in :"+ (end_time-start_time));
+		logger.info("Processed in :"+ (end_time-start_time));
 	}
 
 	/**
@@ -338,8 +348,25 @@ public class SupplementaryMessageProcessor implements Runnable{
 	 */
 	private void processHttp(UssMessage ussMsg, String destination) {
 		UssMessage response = null;
+		String[] destinationArray = destination.split(",");
+		String httpdestination = destinationArray[0];
+		//String replacedUssdText = null;
+		if (destinationArray.length>1){
+			String replacedUssdText = destinationArray[1];
+			if (MAPMessageType.processUnstructuredSSRequest_Request.name()
+					.equalsIgnoreCase(ussMsg.getMessageType())){
+				ussMsg.setUssdText(replacedUssdText);
+				String serviceCode = null;
+				if (replacedUssdText.startsWith("*")){
+					serviceCode = replacedUssdText.substring(replacedUssdText.indexOf("*") + 1, replacedUssdText.indexOf("#"));
+				}else{
+					serviceCode = ussMsg.getUssdText();
+				}
+				ussMsg.setServiceCode(serviceCode);
+			}
+		}
 		try {
-			response = this.doHttpExchange(ussMsg, destination);
+			response = this.doHttpExchange(ussMsg, httpdestination);
 			response.setInTimeStamp(null);
 			response.setOutTimeStamp(new Timestamp(new Date().getTime()));
 			if ("Error".equalsIgnoreCase(response.getMessageType()))

@@ -117,8 +117,8 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 	private DataSource ds;
 	private ExecutorService dbWorker;
 	private ScheduledExecutorService sched = Executors.newScheduledThreadPool(1);
-	//private ExecutorService appWorker;
-	private ForkJoinPool appWorker;
+	private ExecutorService appWorker;
+	//private ForkJoinPool appWorker;
 	private Map<String, Map<String,String>> appSettings = null;
 	//private transient Map<Long, UssMessage> ussMessages = new HashMap<>();
 	private transient FastMap<Long, UssMessage> ussMessages = new FastMap<Long, UssMessage>();
@@ -133,10 +133,10 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 //	private Map<String, SsRouteRules> prR =  new HashMap<>();
 	//private ConcurrentHashMap<Long, Boolean> isEriStyle = new ConcurrentHashMap<>();
 	private ConcurrentHashMap<Long, UssMessage> ussMsgRespnose = new ConcurrentHashMap<>();
-	private FastMap<String, SsRouteRules> rR = new FastMap<>();
-	private FastMap<String, SsRouteRules> prR =  new FastMap<>();
-	private FastMap<Long, Boolean> isEriStyle = new FastMap<>();
-	//private FastMap<Long, UssMessage> ussMsgRespnose = new FastMap<>();
+	private transient FastMap<String, SsRouteRules> rR = new FastMap<>();
+	private transient FastMap<String, SsRouteRules> prR =  new FastMap<>();
+	private transient FastMap<Long, Boolean> isEriStyle = new FastMap<>();
+	//private transient FastMap<Long, UssMessage> ussMsgRespnose = new FastMap<>();
 	
 	/**
 	 * 
@@ -154,8 +154,8 @@ public class UssdMapLayer implements MAPDialogListener, MAPServiceSupplementaryL
 		this.mapProvider.addMAPDialogListener(this);
 		this.mapProvider.getMAPServiceSupplementary().addMAPServiceListener(this);
 		this.mapProvider.getMAPServiceSupplementary().acivate(); 
-		//appWorker = Executors.newFixedThreadPool(Integer.parseInt(this.appSettings.get("app").get("threads")), new UssdgateThreadFactory("MapLayer"));
-		appWorker = new ForkJoinPool(Integer.parseInt(this.appSettings.get("app").get("threads")));
+		appWorker = Executors.newFixedThreadPool(Integer.parseInt(this.appSettings.get("app").get("threads")), new UssdgateThreadFactory("MapLayer"));
+		//appWorker = new ForkJoinPool(Integer.parseInt(this.appSettings.get("app").get("threads")));
 		//Load routing rules from db
 		fetchRoutingRule(false);
 		fetchRoutingRule(true);
