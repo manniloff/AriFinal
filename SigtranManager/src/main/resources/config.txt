@@ -12,6 +12,9 @@ sctp association create unifun1 CLIENT 172.16.70.1 3380 172.16.70.50 3380 socket
 sctp association create unifun2 CLIENT 172.16.70.1 3381 172.16.70.50 3381 sockettype SCTP stackname unifun
 sctp association create unifun3 CLIENT 172.16.70.1 3382 172.16.70.50 3382 sockettype SCTP stackname unifun
 sctp association create unifun4 CLIENT 172.16.70.1 3383 172.16.70.50 3383 sockettype SCTP stackname unifun
+sctp association create unifun5 CLIENT 172.16.70.2 3384 172.16.70.50 3384 sockettype SCTP stackname unifun
+sctp association create unifun6 CLIENT 172.16.70.2 3385 172.16.70.50 3385 sockettype SCTP stackname unifun
+
 
 #sctp set <command> <value> stackname <stack-name>
 
@@ -29,6 +32,8 @@ m3ua asp create ASP1 unifun1 heartbeat true stackname unifun
 m3ua asp create ASP2 unifun2 heartbeat true stackname unifun
 m3ua asp create ASP3 unifun3 heartbeat true stackname unifun
 m3ua asp create ASP4 unifun4 heartbeat true stackname unifun
+m3ua asp create ASP5 unifun5 heartbeat true stackname unifun
+m3ua asp create ASP6 unifun6 heartbeat true stackname unifun
 
 # Add ASP to AS
 #m3ua as remove <as-name> <asp-name> stackname <stack-name>
@@ -37,6 +42,8 @@ m3ua as add AS1 ASP1 stackname unifun
 m3ua as add AS1 ASP2 stackname unifun
 m3ua as add AS1 ASP3 stackname unifun
 m3ua as add AS1 ASP4 stackname unifun
+m3ua as add AS1 ASP5 stackname unifun
+m3ua as add AS1 ASP6 stackname unifun
 
 #Add Route 
 #m3ua route show stackname <stack-name>
@@ -51,6 +58,8 @@ m3ua asp start ASP1 stackname unifun
 m3ua asp start ASP2 stackname unifun
 m3ua asp start ASP3 stackname unifun
 m3ua asp start ASP4 stackname unifun
+m3ua asp start ASP5 stackname unifun
+m3ua asp start ASP6 stackname unifun
 
 ##SCCP
 #Create service access point
