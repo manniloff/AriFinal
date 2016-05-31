@@ -17,7 +17,8 @@
 		<module>CheckSubscriber</module>
 		<module>CapLayer</module>
 		<module>UssdGate</module>
-	</modules>
+    	<module>SmscGateWay</module>
+  </modules>
 	
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
