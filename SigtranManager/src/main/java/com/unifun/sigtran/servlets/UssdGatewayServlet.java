@@ -20,6 +20,7 @@ import org.mobicents.protocols.api.Server;
 import org.mobicents.protocols.ss7.m3ua.As;
 import org.mobicents.protocols.ss7.m3ua.Asp;
 import org.mobicents.protocols.ss7.m3ua.M3UAManagement;
+import org.mobicents.protocols.ss7.m3ua.RouteAs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +34,9 @@ import com.unifun.sigtran.stack.MapStack;
  * @author rbabin
  *
  */
+//curl -v "http://127.0.0.1:7080/SigtranManager/gwsrv?action=m3uainfo"
+//curl -v "http://127.0.0.1:7080/SigtranManager/gwsrv?action=sctpstatus"
+//curl -v "http://127.0.0.1:7080/SigtranManager/gwsrv?action=mtpstatus"
 @WebServlet(name = "UssdGatewayServlet", urlPatterns = {"/gwsrv"}, displayName = "UssdGatewayServlet", asyncSupported = true)
 public class UssdGatewayServlet extends HttpServlet {
 
@@ -46,7 +50,7 @@ public class UssdGatewayServlet extends HttpServlet {
 			HttpServletResponse response ) throws ServletException,
 	IOException
 	{
-		this.sigStack = (SigtranStackBean) request.getServletContext().getAttribute("sigtranStack");
+		this.sigStack = (SigtranStackBean) request.getServletContext().getAttribute("sigtranStackBean");
 		if (sigStack==null){
 			throw new ServletException("Unable to obtain SigtranStack");
 		}
@@ -365,7 +369,7 @@ public class UssdGatewayServlet extends HttpServlet {
 				tmp.add(asStringBuff.toString());
 			}        		 
 			response.getWriter().println(String.format("%s,\"routes\":",tmp.toString()));
-			Map<String, As[]> routes = m3uaserver.getRoute();
+			Map<String, RouteAs> routes = m3uaserver.getRoute();
 			tmp.clear();
 			for(String s: routes.keySet()){        			 
 				tmp.add(String.format("{"

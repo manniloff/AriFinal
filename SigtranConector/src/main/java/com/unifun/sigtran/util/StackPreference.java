@@ -6,8 +6,13 @@
 package com.unifun.sigtran.util;
 
 import java.io.BufferedReader;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.mobicents.protocols.api.Association;
 import org.mobicents.protocols.ss7.m3ua.impl.oam.M3UAShellExecutor;
 import org.mobicents.protocols.ss7.m3ua.impl.oam.SCTPShellExecutor;
 import org.mobicents.protocols.ss7.sccp.impl.oam.SccpExecutor;
@@ -22,6 +27,7 @@ import com.unifun.sigtran.stack.Sctp;
 import com.unifun.sigtran.stack.Tcap;
 import com.unifun.sigtran.util.oam.ISUPShellExecutor;
 import com.unifun.sigtran.util.oam.MapShellExecutor;
+import com.unifun.sigtran.util.oam.StackPrefShellExecutor;
 import com.unifun.sigtran.util.oam.TCAPShellExecutor;
 
 /**
@@ -38,6 +44,7 @@ public class StackPreference {
     //
     private Isup isup;
     
+    private StackPrefShellExecutor stackPrefShellExecuter;
     private SCTPShellExecutor sctpShellExecuter;
     private M3UAShellExecutor m3uaShellExecuter;
     private SccpExecutor sccpShellExecuter;
@@ -74,7 +81,8 @@ public class StackPreference {
     	this.map.init();
         this.isup = new Isup(this.m3ua.getServerM3UAMgmt());
     	this.isup.init();
-		this.sctpShellExecuter = this.sctp.getSctpShellExecuter();
+    	this.stackPrefShellExecuter = new StackPrefShellExecutor(this);
+    	this.sctpShellExecuter = this.sctp.getSctpShellExecuter();
 		this.m3uaShellExecuter = this.m3ua.getM3uaShellExecuter();
 		this.sccpShellExecuter = this.sccp.getSccpShellExecuter();
 		this.isupShellExecuter = this.isup.getIsupShellExecutor();
@@ -135,6 +143,12 @@ public class StackPreference {
     									respString = this.isupShellExecuter.execute(args);
     									logger.info(respString);
     								}
+    								else if (args[0].compareToIgnoreCase("stack") == 0)
+    								{
+    									logger.info(strLine);
+    									respString = this.stackPrefShellExecuter.execute(args);
+    									logger.info(respString);
+    								}
     								else
     								{
     									throw new Exception("invalid command string found :" + strLine);
@@ -158,9 +172,14 @@ public class StackPreference {
         try {
             logger.debug("[StackPreference] Stopping...");
             TimeUnit.MILLISECONDS.sleep(1000);
-            map.stop();
+            if(map.getMapStack()!=null)
+            	map.stop();
             TimeUnit.MILLISECONDS.sleep(1000);
-            sccp.stop();
+            if(tcap.getTcapStack()!=null)
+            	tcap.stopTcap();
+            TimeUnit.MILLISECONDS.sleep(1000);
+            if(sccp.getSccpStack()!=null)
+            	sccp.stop();
             TimeUnit.MILLISECONDS.sleep(1000);
             if (isup.getStack()!=null)
             	isup.getStack().stop();
@@ -214,5 +233,92 @@ public class StackPreference {
 
 	public void setStackConfiguration(BufferedReader br) {
 		this.br = br;
+	}
+
+	public String setForwardMode(String arg, int hbInterval) {
+		logger.debug("setForwardMode");
+		boolean fwMode = false;
+		if("enable".equalsIgnoreCase(arg))
+			fwMode=true;
+		ScheduledExecutorService watchdog = Executors.newScheduledThreadPool(1);
+		StringBuffer assocCheckResult = new StringBuffer();
+		if(fwMode){
+			logger.debug("Enable forward mode");
+			m3ua.getServerM3UAMgmt().setEnableForward(true);
+			//Check if forward association was set
+			Map<Association, Association> forwardAssocGroup = this.m3ua.getServerM3UAMgmt().getForwardAssocGroup();
+			if( forwardAssocGroup.size() < 1)
+				return "Please firs set the forward association group:\n stack forwardassociation association_name forward_association_name";
+			Map<String, Boolean> raspFwdMode = new HashMap<>();
+						
+			for (Association lAssoc : forwardAssocGroup.keySet()){
+            	Association fwdAssoc = forwardAssocGroup.get(lAssoc);
+            	raspFwdMode.put(fwdAssoc.getName(), true);
+            	assocCheckResult.append(lAssoc.getName() + " - " +fwdAssoc.getName()+"\n" );
+            	}
+			//reload forward mode
+			m3ua.getServerM3UAMgmt().aspFactoryReloadForwardMode();
+			//Start watchdog
+			Runnable watchdogTask = new Runnable() {				
+				@Override
+				public void run() {					
+					forwardAssocGroup.forEach((localAssoc, fwdAssoc)->{
+						if(fwdAssoc.isConnected()){
+							//Enable forward mode
+							if(!raspFwdMode.get(fwdAssoc.getName())){
+								logger.info(fwdAssoc.getName()+ ": is UP, activating back forward mode");
+								raspFwdMode.put(fwdAssoc.getName(), true);
+								m3ua.getServerM3UAMgmt().aspFactoryReloadForwardMode(fwdAssoc, true);								
+							}
+						}else{
+							//Disable forward mode
+							if(raspFwdMode.get(fwdAssoc.getName())){								
+								logger.info(fwdAssoc.getName()+ ": is Down, disabling forward mode");
+								raspFwdMode.put(fwdAssoc.getName(), false);
+								m3ua.getServerM3UAMgmt().aspFactoryReloadForwardMode(fwdAssoc, false);								
+							}
+						}
+					});
+				}
+			};
+			try{
+				logger.debug("Start watchdog");
+				// delay 3 seconds after checking the  status of association
+				watchdog.scheduleWithFixedDelay(watchdogTask, 0, hbInterval, TimeUnit.SECONDS);
+			}catch (Exception e){
+				e.printStackTrace();
+				logger.error(e.getMessage());
+			}	
+			
+		}else{
+			logger.debug("Disable Forward mode");
+			//stop watchdog
+			try{
+				logger.debug("Shutdown watchdog");
+				watchdog.shutdown();
+			}catch(Exception e){
+				logger.error(e.getMessage());
+			}
+			//set forward mode to false
+			// reload the forward mode
+			m3ua.getServerM3UAMgmt().setEnableForward(false);
+			m3ua.getServerM3UAMgmt().aspFactoryReloadForwardMode();
+		}
+		return arg.toUpperCase()+" forward mode." + assocCheckResult.toString();		
+	}
+
+	public StackPrefShellExecutor getStackPrefShellExecuter() {
+		return stackPrefShellExecuter;
+	}
+
+	public String setForwardAssociation(String localassoc, String forwardassoc) {
+		Association localAssoc = this.m3ua.getServerM3UAMgmt().getAssocName(localassoc);
+		if (localAssoc == null)
+			return localassoc + " association was not found";
+		Association forwardAssoc = this.m3ua.getServerM3UAMgmt().getAssocName(forwardassoc);
+		if (forwardAssoc == null)
+			return forwardassoc + " association was not found";
+		this.m3ua.getServerM3UAMgmt().addForwardAssocs(localAssoc, forwardAssoc);
+		return localassoc + " - " + forwardassoc + " marked as forward association";
 	}
 }

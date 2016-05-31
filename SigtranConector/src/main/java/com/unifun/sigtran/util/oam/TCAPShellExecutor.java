@@ -3,7 +3,8 @@
  */
 package com.unifun.sigtran.util.oam;
 
-import org.mobicents.protocols.ss7.sccp.impl.SccpStackImpl;
+import org.mobicents.protocols.ss7.sccp.SccpStack;
+import org.mobicents.protocols.ss7.tcap.TCAPProviderImpl;
 import org.mobicents.protocols.ss7.tcap.TCAPStackImpl;
 import org.mobicents.protocols.ss7.tcap.api.TCAPStack;
 
@@ -16,7 +17,7 @@ import com.unifun.sigtran.stack.Tcap;
 public class TCAPShellExecutor {
 
 	private TCAPStack tcapStack;	
-	private SccpStackImpl sccpStack;
+	private SccpStack sccpStack;
 	private Tcap tcap;
 	/**
 	 * @param tcap
@@ -46,6 +47,34 @@ public class TCAPShellExecutor {
 		tcap.setTcapStack(this.tcapStack);
 		return "Tcap Stack was successfully initiated";
 	}
+	/**
+	 * tcap register <ssn>
+	 * @param args
+	 * @return
+	 */
+	private String registerSsn(String[] args){
+		if (args.length < 3){
+			return "Invalid Command";
+		}
+		this.sccpStack =  this.tcap.getSccpStack();
+		if(this.sccpStack == null)
+			return "Unable to obtain sccpStack";
+		int ssn=0;
+		try{
+			ssn = Integer.parseInt(args[2]);
+		}catch(Exception e){
+			return "Please provide proper ssn";
+		}
+		try{
+			this.sccpStack.getSccpProvider().registerSccpListener(ssn, (TCAPProviderImpl)this.tcap.getTcapStack().getProvider());
+		}catch(Exception e){
+			e.printStackTrace();
+			return "Some error ocure while registing ssn";
+		}
+		return "SSN "+ssn+"register to stack";
+	}
+	
+	
 
 	//
 	/**
@@ -63,7 +92,12 @@ public class TCAPShellExecutor {
 		}catch(Exception e){
 			return "Please provide proper timeout";
 		}
-		this.tcapStack.setInvokeTimeout(timeout);
+		try {
+			this.tcapStack.setInvokeTimeout(timeout);
+		} catch (Exception e) {			
+			e.printStackTrace();
+			return e.getMessage();
+		}
 		return String.format("Tcap Invoke timeout seted to %d", timeout);
 	}
 	
@@ -83,7 +117,12 @@ public class TCAPShellExecutor {
 		}catch(Exception e){
 			return "Please provide proper maxdialogs";
 		}
-		this.tcapStack.setMaxDialogs(maxdialogs);
+		try {
+			this.tcapStack.setMaxDialogs(maxdialogs);
+		} catch (Exception e) {			
+			e.printStackTrace();
+			return e.getMessage();
+		}
 		return String.format("Tcap MaxDialogs seted to %d", maxdialogs);
 	}
 	//
@@ -102,7 +141,12 @@ public class TCAPShellExecutor {
 		}catch(Exception e){
 			return "Please provide proper dialogidletimeout";
 		}
-		this.tcapStack.setDialogIdleTimeout(dialogidletimeout);
+		try {
+			this.tcapStack.setDialogIdleTimeout(dialogidletimeout);
+		} catch (Exception e) {		
+			e.printStackTrace();
+			return e.getMessage();
+		}
 		return String.format("Tcap DialogIdleTimeout seted to %d", dialogidletimeout);
 	}
 	
@@ -153,7 +197,7 @@ public class TCAPShellExecutor {
 	 * @return
 	 */
 	private String executeTcap(String[] args) {
-		if (args.length < 2 || args.length > 3) {
+		if (args.length < 2 ) {
             return "Invalid Command";
         }
 
@@ -181,6 +225,9 @@ public class TCAPShellExecutor {
         }
         if(args[1].equalsIgnoreCase("stop")){
         	return stopTcap(args);
+        }
+        if(args[1].equalsIgnoreCase("register")){
+        	return registerSsn(args);
         }
         return "Invalid Command";
 	}

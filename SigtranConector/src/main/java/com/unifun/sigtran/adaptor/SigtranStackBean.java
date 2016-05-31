@@ -43,8 +43,7 @@ import ch.qos.logback.core.joran.spi.JoranException;
 public class SigtranStackBean implements LifecycleListener {
 	private static final String CLASS_NAME = "com.unifun.sigtran.adaptor.SigtranStackBean";
 	private static SigtranStackBean bean = null;
-	public static final Logger logger = LoggerFactory.getLogger(String.format("%1$-15s] ", "[SigtranConnectorBean"));	
-	//public  org.slf4j.Logger logger = Logger.getLogger(CLASS_NAME);//.log(Level.INFO, "Creating new empty instance ");
+	public static final Logger logger = LoggerFactory.getLogger(String.format("%1$-15s] ", "[SigtranStackBean"));	
 	private StackPreference stack;	
 	private BufferedReader config;
 	/*
@@ -68,12 +67,10 @@ public class SigtranStackBean implements LifecycleListener {
         try {
             JoranConfigurator configurator = new JoranConfigurator();
             configurator.setContext(context);
-     // Call context.reset() to clear any previous configuration, e.g. default 
-            // configuration. For multi-step configuration, omit calling context.reset().
             context.reset();
             configurator.doConfigure(logbackcfg);
         } catch (JoranException je) {
-            // StatusPrinter will handle this
+            je.printStackTrace();
         }        
 	}
 
