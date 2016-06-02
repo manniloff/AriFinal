@@ -49,8 +49,8 @@ public class SmppDeliveryReceiptTask implements Runnable {
     			return;
     		}
     		if(!"1".equals(deliverSm.getDlrResponseType())) {
-    			if(("DELIVRD".equals(deliverSm.getState()) && "2".equals(deliverSm.getDlrResponseType()))
-    					|| (!"DELIVRD".equals(deliverSm.getState()) && "3".equals(deliverSm.getDlrResponseType()))) {
+    			if(("2".equals(deliverSm.getState()) && "2".equals(deliverSm.getDlrResponseType()))
+    					|| (!"2".equals(deliverSm.getState()) && "3".equals(deliverSm.getDlrResponseType()))) {
     				ServerController.SaveDLRResponse(deliverSm, started
     						, System.currentTimeMillis(), errorMessage);
     				return;	
