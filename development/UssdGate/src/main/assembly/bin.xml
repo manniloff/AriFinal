@@ -1,0 +1,26 @@
+<assembly
+    xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
+    <formats>
+        <format>dir</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+    <dependencySets>
+        <dependencySet>
+            <outputDirectory>lib</outputDirectory>
+            <unpack>false</unpack>
+            <scope>provided</scope>
+            <includes>
+                <include>org.mobicents.protocols.sctp:sctp-impl</include>
+                <include>org.mobicents.protocols.ss7.m3ua:m3ua-impl</include>
+                <include>org.mobicents.protocols.ss7.tcap:tcap-impl</include>
+                <include>org.mobicents.protocols.ss7.sccp:sccp-impl</include>
+                <include>org.mobicents.protocols.ss7.map:map-impl</include>
+            </includes>
+            <useTransitiveDependencies>true</useTransitiveDependencies>
+            <useTransitiveFiltering>true</useTransitiveFiltering>
+        </dependencySet>        
+    </dependencySets>
+</assembly>
+

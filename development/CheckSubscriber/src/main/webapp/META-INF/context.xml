@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context antiJARLocking="true" path="/LBS_CellId">
+   <ResourceLink global="shared/bean/SigtranObjectFactory" name="bean/SigtranObjectFactory" type="com.unifun.sigtran.adaptor.SigtranStackBean"/>
+   	<Resource name="jdbc/CheckSub" auth="Container" 
+		type="javax.sql.DataSource"
+		driverClassName="com.mysql.jdbc.Driver"
+		username="checksubsig"
+		password="sigcheckSub4$"
+		url="jdbc:mysql://127.0.0.1:3306/CheckSubSig"
+		connectionProperties="noAccessToProcedureBodies=true;characterEncoding=UTF-8;verifyServerCertificate=false;useSSL=false;requireSSL=false"
+		factory="org.apache.tomcat.jdbc.pool.DataSourceFactory"
+		jdbcInterceptors="org.apache.tomcat.jdbc.pool.interceptor.ConnectionState;org.apache.tomcat.jdbc.pool.interceptor.StatementFinalizer;org.apache.tomcat.jdbc.pool.interceptor.ResetAbandonedTimer"
+		initialSize="3"
+		maxActive="200"
+		maxWait="10000"
+		minEvictableIdleTimeMillis="30000"
+		minIdle="10"
+		removeAbandoned="true"
+		removeAbandonedTimeout="60"
+		testOnBorrow="true" 
+		testOnReturn="false" 
+		testWhileIdle="true" 
+		timeBetweenEvictionRunsMillis="30000" 
+		validationInterval="30000" 
+		validationQuery="SELECT 1"
+		initSQL="SET NAMES utf8"
+	/>
+	<ResourceLink name="jdbc/CheckSub"
+             global="jdbc/CheckSub"
+              type="javax.sql.DataSource" />
+</Context>

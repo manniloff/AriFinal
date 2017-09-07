@@ -1,0 +1,18 @@
+{
+    "components": [
+        {
+            "invokeID": 1,
+            "component": {
+                "operation": "process-unstructured-ss-request",
+                "args": {
+                    "ussdString": "*643#",
+                    "msisdn": {
+                        "address": "9023629581",
+                        "nature-of-address": "",
+                        "numbering-plan": ""
+                    }
+                }
+            }
+        }
+    ]
+}

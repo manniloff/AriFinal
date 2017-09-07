@@ -1,0 +1,51 @@
+
+{
+    "sccp": {
+        "calling-party-address": {
+            "routing-indicator": "Route-on-GT",
+            "global-title-indicator": "0100",
+            "ssn": 6,
+            "global-title": {
+                "numbering-plan": "isdn",
+                "encoding-schema": "BCD",
+                "nature-of-address-indicator": "International",
+                "digits": "1234567"
+            }
+        },
+        "called-party-address": {
+            "routing-indicator": "Route-on-SSN",
+            "global-title-indicator": "0100",
+            "ssn": 6,
+            "global-title": {
+                "numbering-plan": "isdn",
+                "encoding-schema": "BCD",
+                "nature-of-address-indicator": "International",
+                "digits": "1234567"
+            }
+        }
+
+    },
+    "tcap": {
+        "type" :"begin",
+        "components": [{
+                "component": {
+                    "type": "invoke",
+                    "value": {
+                        "invokeID": 1,
+                        "component": {
+                            "operation": "process-unstructured-ss-request",
+                            "args": {
+                                "ussdString": "*643#",
+                                "msisdn": {
+                                    "address": "9023629581",
+                                    "nature-of-address": "",
+                                    "numbering-plan": ""
+                                }
+                            }
+                        }
+                    }
+                }
+            }]
+    }
+}
+   

@@ -1,7 +1,5 @@
 create database ussdgate;
 
-grant all on ussdgate.* to ussdgate@'localhost' identified by 'ussdgate';
-grant all on ussdgate.* to ussdgate@'127.0.0.1' identified by 'ussdgate';
 
 use ussdgate;
 

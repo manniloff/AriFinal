@@ -1,0 +1,21 @@
+# For proxy mode
+curl -s "http://127.0.0.1:7080/UssdGate/gwsrv?action=editsccp&line=sccp%20rule%20delete%201%20stackname%20unifun"
+curl -s "http://127.0.0.1:7080/UssdGate/gwsrv?action=editsccp&line=sccp%20rule%20delete%202%20stackname%20unifun"
+curl -s "http://127.0.0.1:7080/UssdGate/gwsrv?action=editsccp&line=sccp%20rule%20delete%203%20stackname%20unifun"
+curl -s "http://127.0.0.1:7080/UssdGate/gwsrv?action=editsccp&line=sccp%20rule%20delete%204%20stackname%20unifun"
+curl -s "http://127.0.0.1:7080/UssdGate/gwsrv?action=editsccp&line=sccp%20rule%20create%201%20R%2016%200%200%200%201%204%2022505987070%20loadshared%201%20backup-addressid%202%20loadsharing-algo%20bit0%20origination-type%20remoteOriginated%20stackname%20unifun"
+curl -s "http://127.0.0.1:7080/UssdGate/gwsrv?action=editsccp&line=sccp%20rule%20create%202%20R%2016%200%200%200%201%204%2022505987140%20loadshared%203%20backup-addressid%204%20loadsharing-algo%20bit0%20origination-type%20remoteOriginated%20stackname%20unifun"
+curl -s "http://127.0.0.1:7080/UssdGate/gwsrv?action=editsccp&line=sccp%20rule%20create%203%20R%2016%200%200%200%201%204%2022505987340%20loadshared%205%20backup-addressid%206%20loadsharing-algo%20bit0%20origination-type%20remoteOriginated%20stackname%20unifun"
+curl -s "http://127.0.0.1:7080/UssdGate/gwsrv?action=editsccp&line=sccp%20rule%20create%204%20R%2016%200%200%200%201%204%2022505987540%20loadshared%207%20backup-addressid%208%20loadsharing-algo%20bit0%20origination-type%20remoteOriginated%20stackname%20unifun"
+curl "http://127.0.0.1:7080/UssdGate/gwsrv?action=maintanacemode&mode=start"
+
+# For normal mode
+curl "http://127.0.0.1:7080/UssdGate/gwsrv?action=maintanacemode&mode=stop"
+curl -s "http://127.0.0.1:7080/UssdGate/gwsrv?action=editsccp&line=sccp%20rule%20delete%201%20stackname%20unifun"
+curl -s "http://127.0.0.1:7080/UssdGate/gwsrv?action=editsccp&line=sccp%20rule%20delete%202%20stackname%20unifun"
+curl -s "http://127.0.0.1:7080/UssdGate/gwsrv?action=editsccp&line=sccp%20rule%20delete%203%20stackname%20unifun"
+curl -s "http://127.0.0.1:7080/UssdGate/gwsrv?action=editsccp&line=sccp%20rule%20delete%204%20stackname%20unifun"
+curl -s "http://127.0.0.1:7080/UssdGate/gwsrv?action=editsccp&line=sccp%20rule%20create%201%20R%2016%200%200%200%201%204%2022505987070%20loadshared%201%20backup-addressid%202%20loadsharing-algo%20bit0%20origination-type%20remoteOriginated%20stackname%20unifun"
+curl -s "http://127.0.0.1:7080/UssdGate/gwsrv?action=editsccp&line=sccp%20rule%20create%202%20R%2016%200%200%200%201%204%2022505987140%20loadshared%201%20backup-addressid%202%20loadsharing-algo%20bit0%20origination-type%20remoteOriginated%20stackname%20unifun"
+curl -s "http://127.0.0.1:7080/UssdGate/gwsrv?action=editsccp&line=sccp%20rule%20create%203%20R%2016%200%200%200%201%204%2022505987340%20loadshared%201%20backup-addressid%202%20loadsharing-algo%20bit0%20origination-type%20remoteOriginated%20stackname%20unifun"
+curl -s "http://127.0.0.1:7080/UssdGate/gwsrv?action=editsccp&line=sccp%20rule%20create%204%20R%2016%200%200%200%201%204%2022505987540%20loadshared%201%20backup-addressid%202%20loadsharing-algo%20bit0%20origination-type%20remoteOriginated%20stackname%20unifun"
