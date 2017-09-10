@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 
 import com.unifun.sigtran.adaptor.SigtranStackBean;
 import com.unifun.sigtran.stack.SccpUnifunStackWrapper;
-import com.unifun.sigtran.ussdgate.UssdMapLayer;
 
 //import com.unifun.sigtran.scpmsctest.ProgramMain;
 /**
@@ -46,7 +45,6 @@ public class UssdGatewayServlet extends HttpServlet {
     private static final long serialVersionUID = -299856690242156646L;
     private static final Logger logger = LoggerFactory.getLogger(String.format("%1$-15s] ", "[UssdGatewayMapApiServlet"));
     private SigtranStackBean sigStack;
-    private UssdMapLayer mapLayer;
 
     @Override
     protected void doGet(HttpServletRequest request,
@@ -56,10 +54,12 @@ public class UssdGatewayServlet extends HttpServlet {
         if (sigStack == null) {
             throw new ServletException("Unable to obtain SigtranStack");
         }
-        this.mapLayer = (UssdMapLayer) request.getServletContext().getAttribute("ussMapLayer");
-        if (mapLayer == null) {
-            throw new ServletException("Unable to obtain UssdMapLayer");
-        }
+
+//        this.mapLayer = (UssdMapLayer) request.getServletContext().getAttribute("ussMapLayer");
+//        if (mapLayer == null) {
+//            throw new ServletException("Unable to obtain UssdMapLayer");
+//        }
+
         response.setContentType("application/json");
         response.setStatus(HttpServletResponse.SC_OK);
 
@@ -155,8 +155,6 @@ public class UssdGatewayServlet extends HttpServlet {
      * @throws IOException
      */
     private void reloadRules(HttpServletRequest request, HttpServletResponse response, String action) throws IOException {
-        this.mapLayer.fetchRoutingRule(true);
-        this.mapLayer.fetchRoutingRule(false);
         PrintWriter out = response.getWriter();
         out.println(String.format("{\"Status\":\"Ok\",\"action\":\"%s\",\"msg\":\"%s\"}",
                 action, "Routing rules reloaded"));
@@ -177,18 +175,18 @@ public class UssdGatewayServlet extends HttpServlet {
 
         switch (mode) {
             case "start":
-                this.mapLayer.setMaintenancemode(true);
+//                this.mapLayer.setMaintenancemode(true);
                 out.println(String.format("{\"Status\":\"Ok\",\"action\":\"%s\",\"msg\":\"%s\"}",
                         action, "Enable maintenance mode"));
                 break;
             case "stop":
-                this.mapLayer.setMaintenancemode(false);
+//                this.mapLayer.setMaintenancemode(false);
                 out.println(String.format("{\"Status\":\"Ok\",\"action\":\"%s\",\"msg\":\"%s\"}",
                         action, "Disable maintenance mode"));
                 break;
             case "status":
-                out.println(String.format("{\"Status\":\"Ok\",\"action\":\"%s\",\"mode\":\"%s\"}",
-                        action, (this.mapLayer.isMaintenancemode()) ? "Started" : "Stoped"));
+//                out.println(String.format("{\"Status\":\"Ok\",\"action\":\"%s\",\"mode\":\"%s\"}",
+//                        action, (this.mapLayer.isMaintenancemode()) ? "Started" : "Stoped"));
                 break;
             default:
                 out.println(String.format("{\"Status\":\"Ok\",\"action\":\"%s\",\"msg\":\"%s\"}",
@@ -196,165 +194,6 @@ public class UssdGatewayServlet extends HttpServlet {
                 break;
         }
     }
-//	private void removeRule(Session session, HttpServletRequest request, HttpServletResponse response){
-//		logger.info(String.format("Reciving http Remove Rule request from %s:%d", request.getRemoteAddr(),request.getRemotePort()));
-//		String rr_id =  request.getParameter("id");
-//		session = db.getSession();             
-//		try{
-//			session.beginTransaction();
-//			SsRouteRules ss_route_rule = 
-//					(SsRouteRules)session.get(SsRouteRules.class, Long.parseLong(rr_id)); 
-//			if ("smpp".equalsIgnoreCase(ss_route_rule.getProtocolType())){
-//				List<SmppSettings> smppSettingsList = db.listSmppSettings(Long.parseLong(rr_id));
-//				SmppSettings smppSettings = smppSettingsList.iterator().next();
-//				session.delete(smppSettings);
-//			}
-//			session.delete(ss_route_rule); 
-//
-//			session.getTransaction().commit();
-//			logger.info("Removed Rule with id:"+ rr_id);
-//		}catch (HibernateException e) {
-//			if (session.getTransaction() !=null) session.getTransaction().rollback();
-//			logger.error(e);	   	      
-//		}finally {	   	    	
-//			session.close(); 
-//		}
-//	}
-//
-//	private void createRule(Session session, HttpServletRequest request, HttpServletResponse response){
-//		logger.info(String.format("Reciving http Create Rule request from %s:%d", request.getRemoteAddr(),request.getRemotePort()));
-//		String ussdtext =  request.getParameter("ussdtext");
-//		String destination =  request.getParameter("destination");
-//		String protocol =  request.getParameter("protocol");
-//		String connps = request.getParameter("connps");
-//		String serviceCode ;
-//		if (ussdtext.startsWith("*")){
-//			serviceCode = ussdtext.substring(ussdtext.indexOf("*") + 1, ussdtext.indexOf("#"));
-//		}else{
-//			serviceCode = ussdtext;
-//		}
-//		String ussdSc = request.getParameter("ussdsc");
-//		//smpp params
-//		String smscuser = request.getParameter("smscuser");
-//		String smscpass = request.getParameter("smscpass");
-//		//--smpp params
-//		SsRouteRules rr = new SsRouteRules();
-//		rr.setUssdText(ussdtext);
-//		rr.setServiceCode(serviceCode);
-//		rr.setDestAddress(destination);
-//		rr.setProtocolType(protocol);
-//		rr.setConnps(connps);
-//		rr.setUssdsc(ussdSc);
-//		rr.setMaintenancemode(0);
-//		boolean isSmpp = false;
-//		SmppSettings smppSetting = new SmppSettings();
-//		if ("smpp".equalsIgnoreCase(protocol)){
-//			smppSetting.setUsername(smscuser);
-//			smppSetting.setPassword(smscpass);
-//			isSmpp = true;
-//
-//		}
-//		session = db.getSession();
-//		try{
-//			session.beginTransaction();
-//			session.save(rr);
-//			if(isSmpp){
-//				smppSetting.setRule_id(rr.getId());
-//				session.save(smppSetting);
-//			}
-//			session.getTransaction().commit();
-//			logger.info(String.format("Inserting parameters: %s %s %s",ussdtext, destination, protocol));
-//		}catch (HibernateException e) {
-//			if (session.getTransaction() !=null) session.getTransaction().rollback();
-//			logger.error(e);	   	      
-//		}finally {	   	    	
-//			session.close(); 
-//		}
-//	}
-//
-//	private void getSmppRules(Session session, HttpServletRequest request, HttpServletResponse response) throws IOException{
-//		logger.info(String.format("Reciving http getSmppRules request from %s:%d", request.getRemoteAddr(),request.getRemotePort()));
-//		String route_rule_id = request.getParameter("ruleid");
-//		session = db.getSession();
-//		try{
-//			session.beginTransaction();
-//			List<SmppSettings> smppSettingsList = db.listSmppSettings(Long.parseLong(route_rule_id));
-//			SmppSettings smpp = smppSettingsList.iterator().next();	   	        
-//			StringBuffer buff = new StringBuffer();
-//			buff.append(String.format("{\"smscip\":\"%s\",\"smscport\":\"%d\",\"smscuser\":\"%s\",\"smscpass\":\"%s\",\"bindmode\":\"%s\",\"addrton\":\"%s\",\"addrnpi\":\"%s\",\"srcton\":\"%s\",\"srcnpi\":\"%s\",\"srcaddr\":\"%s\",\"dstton\":\"%s\",\"dstnpi\":\"%s\",\"dstaddr\":\"%s\",\"srvtype\":\"%s\",\"timeout\":\"%d\"}",
-//					smpp.getSmscIpAddress(), smpp.getSmscPort(), smpp.getUsername(), smpp.getPassword(), smpp.getBindmode(), smpp.getAddrTon(), smpp.getAddrNpi(),smpp.getSourceTon(), smpp.getSourceNpi(), smpp.getSourceAddress(), smpp.getDestinationTon(), smpp.getDestinationNpi(), smpp.getDestintaionAddress(), smpp.getSystemType(), smpp.getTimeOut())); 	  
-//			response.getWriter().println(String.format("%s",buff));
-//		}catch (HibernateException e) {
-//			if (session.getTransaction() !=null) session.getTransaction().rollback();
-//			logger.error(e);	   	      
-//		}finally {
-//			session.close(); 
-//		}
-//	}
-//	private void getRoute(Session session, HttpServletRequest request, HttpServletResponse response) throws IOException{
-//		session = db.getSession();
-//		try{
-//			session.beginTransaction();
-//			List<SsRouteRules> ss_rr = session.createQuery("FROM SsRouteRules").list(); 
-//			StringBuffer buff = new StringBuffer();
-//			for (Iterator iterator = ss_rr.iterator(); iterator.hasNext();){
-//				SsRouteRules ss_rr_item = (SsRouteRules) iterator.next();
-//				if(iterator.hasNext()){
-//					buff.append(String.format("{\"ussdtext\":\"%s\",\"destaddress\":\"%s\",\"servicecode\":\"%s\",\"protocoltype\":\"%s\",\"connps\":\"%s\",\"ussdsc\":\"%s\",\"id\":%d},", ss_rr_item.getUssdText(), 
-//							ss_rr_item.getDestAddress(),ss_rr_item.getServiceCode(),ss_rr_item.getProtocolType(),ss_rr_item.getConnps(),ss_rr_item.getUssdsc(),ss_rr_item.getId()));
-//				}else{
-//					buff.append(String.format("{\"ussdtext\":\"%s\",\"destaddress\":\"%s\",\"servicecode\":\"%s\",\"protocoltype\":\"%s\",\"connps\":\"%s\",\"ussdsc\":\"%s\",\"id\":%d}", ss_rr_item.getUssdText(), 
-//							ss_rr_item.getDestAddress(),ss_rr_item.getServiceCode(),ss_rr_item.getProtocolType(),ss_rr_item.getConnps(),ss_rr_item.getUssdsc(),ss_rr_item.getId()));
-//				}	   	             
-//			}
-//			response.getWriter().println(String.format("[%s]",buff));
-//		}catch (HibernateException e) {
-//			if (session.getTransaction() !=null) session.getTransaction().rollback();
-//			logger.error(e);	   	      
-//		}finally {
-//			session.close(); 
-//		}
-//	}
-//	private void startStack (Session session, HttpServletRequest request, HttpServletResponse response, String action) throws IOException{
-//		logger.info(String.format("Reciving http Start Sigtran Stack request from %s:%d", request.getRemoteAddr(),request.getRemotePort()));
-//		logs.removeAll(logs);
-//		if (!ussdGateway.isScpRunning()) {
-//			logs.add("Starting SCP...\n\r");                 
-//			if (ussdGateway.startScp() == 0) {
-//				logs.add("Started SCP...\n\r");
-//				response.getWriter().println(String.format("{\"Status\":\"Ok\",\"action\":\"%s\",\"msg\":\"%s\"}",action,"Stack initiated"));
-//			} else {
-//				logs.add("Failed to start SCP...\n\r");
-//				response.getWriter().println(String.format("{\"Status\":\"Error\",\"action\":\"%s\",\"msg\":\"%s\"}",action,"Stack failed to start"));
-//			}
-//
-//		} else {
-//			logs.add("ERROR: SCP already running...\n\r");
-//			response.getWriter().println(String.format("{\"Status\":\"Error\",\"action\":\"%s\",\"msg\":\"%s\"}",action,"Stack already running"));
-//		}
-//	}
-//	private void stopStack(HttpServletRequest request){
-//		logger.info(String.format("Reciving http Sigtran Stack request from %s:%d", request.getRemoteAddr(),request.getRemotePort()));
-//		logs.removeAll(logs);
-//		if (ussdGateway.isScpRunning()) {
-//			logs.add("Stoping SCP...\n\r");                 
-//			if (ussdGateway.stopScp() == 0) {
-//				logs.add("Stopped SCP...\n\r");
-//			} else {
-//				logs.add("Failed to stop SCP...\n\r");
-//			}                 
-//		} else {
-//			logs.add("ERROR: SCP not running...\n\r");                 
-//		}
-//	}
-//	private void notification(Session session, HttpServletRequest request, HttpServletResponse response, String action) throws IOException {
-//		StringBuffer strbuff = new StringBuffer();
-//		for (Iterator iterator = logs.iterator(); iterator.hasNext();) {
-//			String string = (String) iterator.next();
-//			strbuff.append(string.trim());
-//		}
-//		response.getWriter().println(String.format("{\"Status\":\"Ok\",\"action\":\"%s\",\"msg\":\"%s\"}",action,strbuff));
-//	}
 
     private void m3uaStatus(HttpServletRequest request, HttpServletResponse response, String action) throws IOException {
         try {

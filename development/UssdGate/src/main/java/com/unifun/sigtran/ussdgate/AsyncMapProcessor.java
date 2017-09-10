@@ -126,23 +126,25 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
             JsonTcap tcap = msg.getTcap();
             JsonSccp sccp = msg.getSccp();
 
-            MAPDialogSupplementary mapDialog = null;
 
             JsonComponent component = tcap.getComponents().get(0);
             JsonMap map = mapMessage(component);
 
+            //create or find dialog
+            MAPDialogSupplementary mapDialog = mapDialog(sccp, tcap);
+
             switch (map.operationName()) {
                 case "proccess-unstructured-ss-request":
-                    mapDialog = processUnstructuredSSRequest(sccp, tcap, (JsonMapOperation) map.operation(), component.getType());
+                    processUnstructuredSSRequest(mapDialog, (JsonMapOperation) map.operation());
                     break;
                 case "unstructured-ss-request":
-                    mapDialog = unstructuredSSRequest(sccp, tcap, component, component.getType());
+                    unstructuredSSRequest(mapDialog, component, component.getType());
                     break;
                 default:
                     throw new IllegalArgumentException("Not implemented yet " + map.operationName());
             }
 
-            assert mapDialog != null : "Could not create or find dialog";
+            if (mapDialog == null) throw new IllegalStateException("Could not create or find dialog");
 
             context.setId(mapDialog.getLocalDialogId());
             this.asyncContextQueue.put(mapDialog.getLocalDialogId(), context);
@@ -162,6 +164,7 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
                     break;
             }
         } catch (Throwable t) {
+            LOGGER.error("Could not send message", t);
             JsonTcap tcap = new JsonTcap();
             tcap.setType("Abort");
             tcap.setAbortMessage(t.getMessage());
@@ -186,44 +189,74 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
         }
     }
 
-    private MAPDialogSupplementary processUnstructuredSSRequest(JsonSccp sccp, JsonTcap tcap, JsonMapOperation mapMessage, String type) throws MAPException {
+    /**
+     * Builds MAP dialog.
+     * 
+     * If other side works in load sharing mode then we can receive intermediate
+     * messages related to some existing transaction. In case of TCAP BEGIN we
+     * will always create new dialog. For other message types we will try to find
+     * existing dialog first and create new one only when it does not exist. 
+     * Later this dialog might be closed explicit or expired.
+     * 
+     * @param sccp
+     * @param tcap
+     * @return 
+     */
+    private MAPDialogSupplementary mapDialog(JsonSccp sccp, JsonTcap tcap) throws MAPException {
+        MAPDialogSupplementary dialog = (MAPDialogSupplementary) mapProvider.getMAPDialog(tcap.getDialog().getDialogId());
+        if (dialog == null) {
+            ISDNAddressString origReference = valueOf(tcap.getDialog().getOriginationReference());
+            ISDNAddressString destReference = valueOf(tcap.getDialog().getDestinationReference());
 
-        MAPParameterFactory mapParameterFactory = mapProvider.getMAPParameterFactory();
-        ISDNAddressString origReference = valueOf(tcap.getDialog().getOriginationReference());
-        ISDNAddressString destReference = valueOf(tcap.getDialog().getDestinationReference());
+            SccpAddress callingPartyAddress = valueOf(sccp.getCallingPartyAddress());
+            SccpAddress calledPartyAddress = valueOf(sccp.getCalledPartyAddress());
 
-        SccpAddress callingPartyAddress = valueOf(sccp.getCallingPartyAddress());
-        SccpAddress calledPartyAddress = valueOf(sccp.getCalledPartyAddress());
-
-        ISDNAddressString msisdn = valueOf(mapMessage.getMsisdn());
-
-        CBSDataCodingSchemeImpl codingScheme = codingScheme(mapMessage.getCodingScheme());
-        USSDString ussdString = mapParameterFactory.createUSSDString(mapMessage.getUssdString(), codingScheme, Charset.forName("UTF-8"));
-
-        MAPDialogSupplementary mapDialog = this.mapProvider.getMAPServiceSupplementary()
-                .createNewDialog(MAPApplicationContext.getInstance(MAPApplicationContextName.networkUnstructuredSsContext, MAPApplicationContextVersion.version2),
-                        callingPartyAddress, origReference, calledPartyAddress, destReference);
-
-        mapDialog.addProcessUnstructuredSSRequest(codingScheme, ussdString, null, msisdn);
-        mapDialog.getLocalDialogId();
-
-        if (this.isEricsson(tcap.getDialog())) {
-            ISDNAddressString msisdn1 = valueOf(tcap.getDialog().getMsisdn());
-            ISDNAddressString vlrAddress = valueOf(tcap.getDialog().getVlrAddress());
-            mapDialog.addEricssonData(msisdn1, vlrAddress);
+            dialog = mapProvider.getMAPServiceSupplementary()
+                    .createNewDialog(MAPApplicationContext.getInstance(MAPApplicationContextName.networkUnstructuredSsContext, MAPApplicationContextVersion.version2),
+                            callingPartyAddress, origReference, calledPartyAddress, destReference);
+            
+            if (this.isEricsson(tcap.getDialog())) {
+                ISDNAddressString msisdn = valueOf(tcap.getDialog().getMsisdn());
+                ISDNAddressString vlrAddress = valueOf(tcap.getDialog().getVlrAddress());
+                dialog.addEricssonData(msisdn, vlrAddress);
+            }
         }
 
-        return mapDialog;
+        
+        return dialog;
     }
 
-    private MAPDialogSupplementary unstructuredSSRequest(JsonSccp sccp, JsonTcap tcap, JsonComponent component, String type) throws MAPException {
+    /**
+     * Appends ProcessUnstructuredSSRequest message to the given dialog.
+     * 
+     * @param dialog
+     * @param mapMessage
+     * @throws MAPException 
+     */
+    private void processUnstructuredSSRequest(MAPDialogSupplementary dialog, JsonMapOperation mapMessage) throws MAPException {
+        MAPParameterFactory mapParameterFactory = mapProvider.getMAPParameterFactory();
+
+        ISDNAddressString msisdn = valueOf(mapMessage.getMsisdn());
+        CBSDataCodingSchemeImpl codingScheme = codingScheme(mapMessage.getCodingScheme());
+        USSDString ussdString = mapParameterFactory.createUSSDString(mapMessage.getUssdString(), codingScheme, Charset.forName("UTF-8"));
+        
+        dialog.addProcessUnstructuredSSRequest(codingScheme, ussdString, null, msisdn);
+    }
+
+    /**
+     * Appends UnstructuredSSRequest to the given Dialog.
+     * 
+     * @param dialog
+     * @param component
+     * @param type
+     * @throws MAPException 
+     */
+    private void unstructuredSSRequest(MAPDialogSupplementary dialog, JsonComponent component, String type) throws MAPException {
         JsonMapOperation mapMessage = (JsonMapOperation) mapMessage(component).operation();
         MAPParameterFactory mapParameterFactory = mapProvider.getMAPParameterFactory();
 
         CBSDataCodingSchemeImpl codingScheme = codingScheme(mapMessage.getCodingScheme());
         USSDString ussdString = mapParameterFactory.createUSSDString(mapMessage.getUssdString(), codingScheme, Charset.forName("UTF-8"));
-
-        MAPDialogSupplementary dialog = (MAPDialogSupplementary) mapProvider.getMAPDialog(tcap.getDialog().getDialogId());
 
         switch (type) {
             case "invoke":
@@ -234,8 +267,6 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
                 dialog.addUnstructuredSSResponse(returnResultLast.invokeId(), codingScheme, ussdString);
                 break;
         }
-
-        return dialog;
     }
 
     private ISDNAddressString valueOf(JsonAddressString address) {
@@ -434,18 +465,17 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
         UssMessage m = new UssMessage(msg, "unstructured-ss-request");
         ExecutionContext context = asyncContextQueue.get(msg.getMAPDialog().getLocalDialogId());
 
-        String ctxName = context != null
-                ? context.toString()
-                : "ExecutionContext(NULL, " + msg.getMAPDialog().getLocalDialogId();
         JsonComponent component = m.getTcap().getComponents().get(0);
 
         if (LOGGER.isInfoEnabled()) {
             LOGGER.info(String.format("(TC-%s):{%s}: unstructured-ss-request <--- %s",
-                    m.getTcap().getType(), component.getType(), ctxName));
+                    m.getTcap().getType(), component.getType(), ctxName(context, msg.getMAPDialog().getLocalDialogId())));
         }
 
         if (context != null) {
             context.completed(m);
+        } else {
+            httpProcessor.processMessage(m, "http://127.0.0.1:7081/UssdGate/test");
         }
     }
 

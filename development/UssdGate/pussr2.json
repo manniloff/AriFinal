@@ -57,7 +57,7 @@
                     "value": {
                         "invokeID": 1,
                         "component": {
-                            "operation": "proccess-unstructured-ss-request",
+                            "operation": "unstructured-ss-request",
                             "args": {
                                 "ussdString": "*643#",
 				"coding-scheme" : {

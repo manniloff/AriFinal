@@ -28,15 +28,12 @@ import org.slf4j.LoggerFactory;
 
 import com.unifun.sigtran.adaptor.SigtranStackBean;
 import com.unifun.sigtran.ussdgate.AsyncMapProcessor;
-import com.unifun.sigtran.ussdgate.UssdMapLayer;
-import com.unifun.sigtran.ussdgate.UssdgateThreadFactory;
 import com.unifun.sigtran.ussdgate.db.FetchSettings;
 
 public class UssdGateServletListener implements ServletContextListener {
 
     public static final Logger logger = LoggerFactory.getLogger(String.format("%1$-20s] ", "[UssdGateServletListener"));
     private static SigtranStackBean bean = null;
-    private static UssdMapLayer ussMapLayer;
     private ExecutorService dbWorker = null;
     private Map<String, Map<String, String>> appSettings = null;
     private ExecutorService exec = Executors.newFixedThreadPool(1);
@@ -61,9 +58,6 @@ public class UssdGateServletListener implements ServletContextListener {
 
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
-        if (ussMapLayer != null) {
-            ussMapLayer.stop();
-        }
         if (dbWorker != null) {
             dbWorker.shutdown();
         }
@@ -94,7 +88,6 @@ public class UssdGateServletListener implements ServletContextListener {
                     logger.error("HTTP-Processor could not be initialized", e);
                 }
                 
-                sce.getServletContext().setAttribute("ussMapLayer", ussMapLayer);
                 sce.getServletContext().setAttribute("mapProcessor", mapProcessor);
 //				sce.getServletContext().setAttribute("mapPreference", cfg);
 //				sce.getServletContext().setAttribute("fjpool", pool);
@@ -144,10 +137,6 @@ public class UssdGateServletListener implements ServletContextListener {
         logger.info("Initiate dbWorker pool");
         //dbWorker = Executors.newFixedThreadPool(getDbmaxActive(), new UssdgateThreadFactory("DbWorker"));
         int nThreads = getDbmaxActive();
-        dbWorker = new ThreadPoolExecutor(nThreads, nThreads,
-                60000L, TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<Runnable>(),
-                new UssdgateThreadFactory("DbWorker"));
         String tableName = "ussdgate_settings";
         try {
             tableName = settingsTableName();
