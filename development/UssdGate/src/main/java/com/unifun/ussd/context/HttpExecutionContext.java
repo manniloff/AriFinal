@@ -37,7 +37,10 @@ public class HttpExecutionContext implements ExecutionContext {
     public void completed(UssMessage msg) {
         EXECUTOR.execute(() -> {
             try {
-                asyncContext.getResponse().getWriter().println(msg);
+                String content = msg.toString();
+                asyncContext.getResponse().setContentType("application/json");
+                asyncContext.getResponse().setContentLength(content.length());
+                asyncContext.getResponse().getWriter().println(content);
                 asyncContext.getResponse().flushBuffer();
             } catch (IOException e) {
             }
