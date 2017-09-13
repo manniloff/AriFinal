@@ -6,7 +6,6 @@
 package com.unifun.sigtran.ussdgate;
 
 import com.unifun.ussd.context.ExecutionContext;
-import com.unifun.ussd.context.MapExecutionContext;
 import com.unifun.map.JsonAddressString;
 import com.unifun.map.JsonComponent;
 import com.unifun.map.JsonDataCodingScheme;
@@ -19,6 +18,7 @@ import com.unifun.map.JsonSccp;
 import com.unifun.map.JsonSccpAddress;
 import com.unifun.map.JsonTcap;
 import com.unifun.map.JsonTcapDialog;
+import com.unifun.ussd.router.Router;
 import java.nio.charset.Charset;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.http.nio.reactor.IOReactorException;
@@ -101,6 +101,8 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
     //HTTP related RX/TX 
     private final AsyncHttpProcessor httpProcessor = new AsyncHttpProcessor(this);
 
+    private final Router router;
+    
     //Logger instance
     private final static Logger LOGGER = Logger.getLogger(AsyncMapProcessor.class);
 
@@ -111,10 +113,20 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
      * @param sccpProvider
      */
     public AsyncMapProcessor(MAPStack mapStack, SccpProvider sccpProvider) {
+        this.router = new Router(System.getProperty("catalina.base") + "/conf/router.json");
         this.sccpProvider = sccpProvider;
         this.mapProvider = mapStack.getMAPProvider();
     }
 
+    /**
+     * Gets access to the message router.
+     * 
+     * @return 
+     */
+    public Router router() {
+        return router;
+    }
+    
     /**
      * Initializes MAP/HTTP resources.
      *
@@ -532,6 +544,7 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
 
         JsonComponent component = m.getTcap().getComponents().get(0);
         ExecutionContext context = contextQueue.get(msg.getMAPDialog().getLocalDialogId());
+        
         if (LOGGER.isInfoEnabled()) {
             LOGGER.info(String.format("(TC-%s):{%s}: unstructured-ss-request <--- %s",
                     m.getTcap().getType(), component.getType(), ctxName(context, msg.getMAPDialog().getLocalDialogId())));

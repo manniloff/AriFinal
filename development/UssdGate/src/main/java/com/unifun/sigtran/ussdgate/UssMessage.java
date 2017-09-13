@@ -19,7 +19,6 @@ import com.unifun.map.JsonTcap;
 import com.unifun.map.JsonTcapDialog;
 import java.io.Serializable;
 import java.nio.charset.Charset;
-import java.sql.Timestamp;
 import org.mobicents.protocols.ss7.map.api.primitives.AddressString;
 import org.mobicents.protocols.ss7.map.api.primitives.USSDString;
 import org.mobicents.protocols.ss7.map.api.service.supplementary.ProcessUnstructuredSSRequest;
@@ -37,25 +36,6 @@ import org.mobicents.protocols.ss7.sccp.parameter.SccpAddress;
  *
  */
 public class UssMessage implements Serializable {
-    //dialog_id, ussd_text, msisdn, charset, message_type (TCAP Continue or TCAP End)
-
-    private long invokeId;
-    private long dialogId;
-    private String ussdText;
-    private String msisdn;
-    private String charset;
-    private String messageType;
-    private String serviceCode;
-    private int opc;
-    private int dpc;
-    private Timestamp outTimeStamp;
-    private Timestamp inTimeStamp;
-    private boolean isSmpp = false;
-    private String source = "app";
-    private long initialDialogId = -1;
-    private SsRouteRules routeRule;
-    private SsRouteRules maintenanceRouteRule;
-    private long intermediateInvokeId;
 
     private JsonMessage jsonMessage;
     
@@ -256,142 +236,6 @@ public class UssMessage implements Serializable {
     
     public JsonTcap getTcap() {
         return jsonMessage.getTcap();
-    }
-    
-    public long getInvokeId() {
-        return invokeId;
-    }
-
-    public void setInvokeId(long invokeId) {
-        this.invokeId = invokeId;
-    }
-
-    public int getOpc() {
-        return opc;
-    }
-
-    public void setOpc(int opc) {
-        this.opc = opc;
-    }
-
-    public int getDpc() {
-        return dpc;
-    }
-
-    public void setDpc(int dpc) {
-        this.dpc = dpc;
-    }
-
-    public boolean isSmpp() {
-        return isSmpp;
-    }
-
-    public void setSmpp(boolean isSmpp) {
-        this.isSmpp = isSmpp;
-    }
-
-    public long getDialogId() {
-        return dialogId;
-    }
-
-    public void setDialogId(long dialogId) {
-        this.dialogId = dialogId;
-    }
-
-    public String getUssdText() {
-        return ussdText;
-    }
-
-    public void setUssdText(String ussdText) {
-        this.ussdText = ussdText;
-    }
-
-    public String getMsisdn() {
-        return msisdn;
-    }
-
-    public void setMsisdn(String msisdn) {
-        this.msisdn = msisdn;
-    }
-
-    public String getCharset() {
-        return charset;
-    }
-
-    public void setCharset(String charset) {
-        this.charset = charset;
-    }
-
-    public String getMessageType() {
-        return messageType;
-    }
-
-    public void setMessageType(String messageType) {
-        this.messageType = messageType;
-    }
-
-    public String getServiceCode() {
-        return serviceCode;
-    }
-
-    public void setServiceCode(String serviceCode) {
-        this.serviceCode = serviceCode;
-    }
-
-    public Timestamp getOutTimeStamp() {
-        return outTimeStamp;
-    }
-
-    public void setOutTimeStamp(Timestamp outTimeStamp) {
-        this.outTimeStamp = outTimeStamp;
-    }
-
-    public Timestamp getInTimeStamp() {
-        return inTimeStamp;
-    }
-
-    public void setInTimeStamp(Timestamp inTimeStamp) {
-        this.inTimeStamp = inTimeStamp;
-    }
-
-    public String getSource() {
-        return source;
-    }
-
-    public void setSource(String source) {
-        this.source = source;
-    }
-
-    public long getInitialDialogId() {
-        return initialDialogId;
-    }
-
-    public void setInitialDialogId(long initialDialogId) {
-        this.initialDialogId = initialDialogId;
-    }
-
-    public SsRouteRules getRouteRule() {
-        return routeRule;
-    }
-
-    public void setRouteRule(SsRouteRules routeRule) {
-        this.routeRule = routeRule;
-    }
-
-    public SsRouteRules getSecondaryRoute() {
-        return maintenanceRouteRule;
-    }
-
-    public void setMaintenanceRouteRule(SsRouteRules maintenanceRouteRule) {
-        this.maintenanceRouteRule = maintenanceRouteRule;
-    }
-
-    public long getIntermediateInvokeId() {
-        return intermediateInvokeId;
-    }
-
-    public void setIntermediateInvokeId(long intermediateInvokeId) {
-        this.intermediateInvokeId = intermediateInvokeId;
     }
     
     @Override

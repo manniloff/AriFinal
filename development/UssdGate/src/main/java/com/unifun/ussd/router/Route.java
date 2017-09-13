@@ -9,7 +9,7 @@ package com.unifun.ussd.router;
  *
  * @author okulikov
  */
-public class Route {
+public class Route implements Comparable {
     private final String pattern;
     private final String primaryURL;
     private final String secondaryURL;
@@ -30,5 +30,16 @@ public class Route {
     
     public String secondaryURL() {
         return secondaryURL;
+    }
+    
+    @Override
+    public String toString() {
+        return String.format("route:%s, primary-url:%s, secondary-url:%s", pattern, primaryURL,secondaryURL);
+    }
+
+    @Override
+    public int compareTo(Object o) {
+        Route other = (Route) o;
+        return Integer.compare(this.pattern.length(), other.pattern.length());
     }
 }

@@ -1,3 +1,9 @@
 {
-    "name": "okulikov"
+    "routes": [
+        {
+            "pattern": "",
+            "primary-url": "http://127.0.0.1:7080/UssdGate/test",
+            "secondary-url": "http://127.0.0.1:7080/UssdGate/test"
+        }
+    ]
 }

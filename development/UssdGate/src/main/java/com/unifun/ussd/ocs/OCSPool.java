@@ -3,15 +3,20 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.unifun.ussd.router;
+package com.unifun.ussd.ocs;
 
 import com.unifun.sigtran.ussdgate.Deployment;
+import com.unifun.ussd.router.Route;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -24,38 +29,22 @@ import org.jboss.logging.Logger;
  *
  * @author okulikov
  */
-public class Router  implements Deployment {
-    private final AtomicReference<Collection<Route>> routes = new AtomicReference();
-    
+public class OCSPool implements Deployment {
+
+    AtomicReference<ArrayList<OCS>> pool = new AtomicReference();
+
     private final File file;
     private Date lastReload = new Date(0);
-    
-    private final Logger LOGGER = Logger.getLogger(Router.class);
-    
-    /**
-     * Creates new instance of this router.
-     * 
-     * @param path absolute path to the configuration file
-     */
-    public Router(String path) {
+
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private Future future;
+
+    private final Logger LOGGER = Logger.getLogger(OCSPool.class);
+
+    public OCSPool(String path) {
         file = new File(path);
     }
 
-    /**
-     * Finds route matching given selector.
-     * 
-     * @param selector
-     * @return 
-     */
-    public Route find(String selector) {
-        for (Route route : routes.get()) {
-            if (route.pattern().matches(selector)) {
-                return route;
-            }
-        }
-        return null;
-    }
-    
     @Override
     public void reload() throws Exception {
         lastReload = new Date();
@@ -87,7 +76,7 @@ public class Router  implements Deployment {
             }
             
             Collections.sort(routeList);
-            this.routes.set(Collections.unmodifiableList(routeList));
+//            this.pool.set(Collections.unmodifiableList(routeList));
         }
     }
     
@@ -95,4 +84,5 @@ public class Router  implements Deployment {
     public boolean isModified() {
         return new Date(file.lastModified()).after(lastReload);
     }
+    
 }
