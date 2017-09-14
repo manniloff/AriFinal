@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.unifun.sigtran.ussdgate;
+package com.unifun.ussd;
 
 import com.unifun.map.JsonMessage;
 import com.unifun.ussd.context.MapExecutionContext;

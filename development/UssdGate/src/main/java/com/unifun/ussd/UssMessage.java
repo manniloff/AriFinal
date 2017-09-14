@@ -1,7 +1,7 @@
 /**
  *
  */
-package com.unifun.sigtran.ussdgate;
+package com.unifun.ussd;
 
 import com.unifun.map.JsonAddressString;
 import com.unifun.map.JsonComponent;

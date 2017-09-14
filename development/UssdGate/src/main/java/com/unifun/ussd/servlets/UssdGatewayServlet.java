@@ -1,7 +1,7 @@
 /**
  *
  */
-package com.unifun.sigtran.ussdgate.servlets;
+package com.unifun.ussd.servlets;
 
 import java.io.IOException;
 import java.io.PrintWriter;

@@ -1,11 +1,11 @@
 /**
  *
  */
-package com.unifun.sigtran.ussdgate.servlets;
+package com.unifun.ussd.servlets;
 
 import com.unifun.map.JsonMessage;
 import com.unifun.ussd.context.HttpExecutionContext;
-import com.unifun.sigtran.ussdgate.AsyncMapProcessor;
+import com.unifun.ussd.AsyncMapProcessor;
 import java.io.IOException;
 
 import javax.servlet.ServletException;
@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.unifun.sigtran.ussdgate.UssMessage;
+import com.unifun.ussd.UssMessage;
 import java.io.InputStreamReader;
 import javax.json.Json;
 import javax.json.JsonObject;

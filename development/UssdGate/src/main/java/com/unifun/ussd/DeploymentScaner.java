@@ -3,14 +3,14 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.unifun.sigtran.ussdgate;
+package com.unifun.ussd;
 
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import org.jboss.logging.Logger;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -19,20 +19,24 @@ import org.jboss.logging.Logger;
 public class DeploymentScaner implements Runnable {
 
     private final ArrayList<Deployment> deployments = new ArrayList();
-    
+
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private Future future;
 
     private final Logger LOGGER = Logger.getLogger(DeploymentScaner.class);
-    
+
     public void add(Deployment d) {
-        deployments.add(d);
+        synchronized (deployments) {
+            deployments.add(d);
+        }
     }
-    
+
     public void remove(Deployment d) {
-        deployments.remove(d);
+        synchronized (deployments) {
+            deployments.remove(d);
+        }
     }
-    
+
     /**
      * Starts router.
      */
@@ -40,25 +44,34 @@ public class DeploymentScaner implements Runnable {
         future = scheduler.scheduleAtFixedRate(this, 0, 1, TimeUnit.SECONDS);
         LOGGER.info("Started scanner");
     }
-    
+
     /**
      * Terminates Router.
      */
     public void stop() {
-        if (future != null) future.cancel(true);
+        if (future != null) {
+            future.cancel(true);
+        }
         LOGGER.info("Scaner has been stopped");
     }
-    
+
     @Override
     public void run() {
-        deployments.stream().filter((deployment) -> (deployment.isModified())).forEach((deployment) -> {
+        LOGGER.info("deployements size: " + deployments.size());
+        synchronized (deployments) {
             try {
-                LOGGER.info("Deploing " + deployment);
-                deployment.reload();
+            deployments.stream().filter((deployment) -> (deployment.isModified())).forEach((deployment) -> {
+                try {
+                    LOGGER.info("Deploing " + deployment);
+                    deployment.reload();
+                } catch (Exception e) {
+                    LOGGER.warn("Could not re-deploy " + deployment, e);
+                }
+            });
             } catch (Exception e) {
-                LOGGER.warn("Could not re-deploy " + deployment, e);
+                e.printStackTrace();
             }
-        });
+        }
     }
-    
+
 }

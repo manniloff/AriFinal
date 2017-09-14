@@ -5,7 +5,7 @@
  */
 package com.unifun.ussd.context;
 
-import com.unifun.sigtran.ussdgate.UssMessage;
+import com.unifun.ussd.UssMessage;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.apache.http.concurrent.FutureCallback;

@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.unifun.sigtran.ussdgate.service;
+package com.unifun.ussd.servlets;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -15,32 +15,40 @@ import javax.naming.NamingException;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.unifun.sigtran.adaptor.SigtranStackBean;
-import com.unifun.sigtran.ussdgate.AsyncMapProcessor;
-import com.unifun.sigtran.ussdgate.DeploymentScaner;
+import com.unifun.ussd.AsyncMapProcessor;
+import com.unifun.ussd.DeploymentScaner;
+import com.unifun.ussd.OCSCluster;
+import org.apache.log4j.Logger;
 
 public class UssdGateServletListener implements ServletContextListener {
 
-    public static final Logger LOGGER = LoggerFactory.getLogger(String.format("%1$-20s] ", "[UssdGateServletListener"));
+    public static final Logger LOGGER = Logger.getLogger(UssdGateServletListener.class);
+
     private static SigtranStackBean bean = null;
 //    private Map<String, Map<String, String>> appSettings = null;
     private ExecutorService exec = Executors.newFixedThreadPool(1);
     private final DeploymentScaner deploymentScaner = new DeploymentScaner();
-    
+
     @Override
     public void contextInitialized(ServletContextEvent sce) {
         LOGGER.info("Initiating UssdGateServletListener");
         deploymentScaner.start();
-        
+
+        try {
+            final OCSCluster ocsCluster = new OCSCluster(System.getProperty("catalina.base") + "/conf");
+            deploymentScaner.add(ocsCluster);
+            sce.getServletContext().setAttribute("ocs.cluster", ocsCluster);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         final Runnable resetCounterTask = new Runnable() {
             public void run() {
                 loadMapListiner(sce);
             }
         };
-        
+
         try {
             exec.submit(resetCounterTask);
         } catch (Exception e) {
@@ -59,7 +67,7 @@ public class UssdGateServletListener implements ServletContextListener {
     /**
      *
      */
-    private void loadMapListiner(ServletContextEvent sce)  {
+    private void loadMapListiner(ServletContextEvent sce) {
         LOGGER.info("Lookup for SigtranObjectFactory in JNDI");
         boolean contextloop = true;
         while (contextloop) {
@@ -68,23 +76,23 @@ public class UssdGateServletListener implements ServletContextListener {
                 //Initiate map listiner for usssd messages types
                 addMapListener(sce);
                 contextloop = false;
-                
+
                 final AsyncMapProcessor mapProcessor = new AsyncMapProcessor(
-                        bean.getStack().getMap().getMapStack(), 
+                        bean.getStack().getMap().getMapStack(),
                         bean.getStack().getSccp().getSccpStack().getSccpProvider()
                 );
-                
+
                 deploymentScaner.add(mapProcessor.router());
-                
+
                 try {
                     mapProcessor.init();
                 } catch (Exception e) {
                     LOGGER.error("MAP-Processor could not be initialized", e);
                 }
-                
+
                 sce.getServletContext().setAttribute("mapProcessor", mapProcessor);
-//				sce.getServletContext().setAttribute("mapPreference", cfg);
-//				sce.getServletContext().setAttribute("fjpool", pool);
+
+                LOGGER.info("Initialized OCS cluster");
                 if (!exec.isTerminated()) {
                     exec.shutdown();
                 }
@@ -140,8 +148,7 @@ public class UssdGateServletListener implements ServletContextListener {
             }
         }
         LOGGER.info("Starting Ussd Map Service Listiner");
-        
-        
+
     }
 
 }

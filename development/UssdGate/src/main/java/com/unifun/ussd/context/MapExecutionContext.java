@@ -5,8 +5,8 @@
  */
 package com.unifun.ussd.context;
 
-import com.unifun.sigtran.ussdgate.AsyncMapProcessor;
-import com.unifun.sigtran.ussdgate.UssMessage;
+import com.unifun.ussd.AsyncMapProcessor;
+import com.unifun.ussd.UssMessage;
 
 /**
  *

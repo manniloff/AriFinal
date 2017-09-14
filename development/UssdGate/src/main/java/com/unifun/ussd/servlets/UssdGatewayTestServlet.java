@@ -1,7 +1,7 @@
 /**
  *
  */
-package com.unifun.sigtran.ussdgate.servlets;
+package com.unifun.ussd.servlets;
 
 import com.unifun.map.JsonAddressString;
 import com.unifun.map.JsonComponent;
@@ -13,7 +13,7 @@ import com.unifun.map.JsonMapOperation;
 import com.unifun.map.JsonMessage;
 import com.unifun.map.JsonTcap;
 import com.unifun.map.JsonTcapDialog;
-import com.unifun.sigtran.ussdgate.UssMessage;
+import com.unifun.ussd.UssMessage;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;

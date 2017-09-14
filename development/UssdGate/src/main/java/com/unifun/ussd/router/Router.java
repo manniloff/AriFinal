@@ -5,7 +5,7 @@
  */
 package com.unifun.ussd.router;
 
-import com.unifun.sigtran.ussdgate.Deployment;
+import com.unifun.ussd.Deployment;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
