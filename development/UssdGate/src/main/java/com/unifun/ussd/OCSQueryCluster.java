@@ -6,7 +6,6 @@
 package com.unifun.ussd;
 
 import com.unifun.map.JsonMessage;
-import com.unifun.ussd.Deployment;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
@@ -22,30 +21,62 @@ import javax.json.JsonReader;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * This class manages collection of OCS queries.
+ * 
+ * Typical OCS system includes several nodes. Each query of in this collection
+ * belongs to a specific node. Query contains <code>ProcessUnstructuredSSRequest</code>
+ * message in json format wrapped with TCAP and SCCP portions.
+ * 
+ * Collection is build from files that are located in the deployment directory.
+ * The name of the file should start with <code>ocs-</code> prefix.
+ * 
+ * Query can be accessed by name which matches the name of the <code>ocs-</code> file 
+ * without extension or via another strategy.
+ * 
+ * 
  * @author okulikov
  */
-public class OCSCluster implements Deployment {
-
+public class OCSQueryCluster implements Deployment {
+    
+    //pool of objets
     private final AtomicReference<Map<String, JsonMessage>> pool = new AtomicReference();
     private Iterator<JsonMessage> it;
     
     private final File ocsDir;
     private List<File> files = new ArrayList();
     
+    //date&time when messages were loaded
     private Date lastReload = new Date(0);
 
-    private final Logger LOGGER = Logger.getLogger(OCSCluster.class);
+    //logger instance
+    private final Logger LOGGER = Logger.getLogger(OCSQueryCluster.class);
 
-    public OCSCluster(String path) {
+    
+    /**
+     * Creates new instance of this collection.
+     * 
+     * @param path 
+     */
+    public OCSQueryCluster(String path) {
         ocsDir = new File(path);
     }
 
-    public JsonMessage ocs(String name) {
+    /**
+     * Provides access to query with given name.
+     * 
+     * @param name
+     * @return 
+     */
+    public JsonMessage query(String name) {
         return pool.get().get(name);
     }
     
-    public JsonMessage nextRoundRobin() {
+    /**
+     * Gets query based on round robin strategy.
+     * 
+     * @return 
+     */
+    public JsonMessage nextQuery() {
         if (it == null) {
             it = pool.get().values().iterator();
         }
@@ -75,6 +106,12 @@ public class OCSCluster implements Deployment {
         this.pool.set(Collections.unmodifiableMap(items));
     }
     
+    /**
+     * Gets file name without extension.
+     * 
+     * @param f
+     * @return 
+     */
     private String name(File f) {
         return f.getName().substring(0, f.getName().indexOf('.'));
     }
@@ -87,7 +124,12 @@ public class OCSCluster implements Deployment {
         }
         return list.stream().anyMatch((f) -> (new Date(f.lastModified()).after(lastReload)));
     }
-    
+
+    /**
+     * List ocs related files located in working directory.
+     * 
+     * @return 
+     */
     private ArrayList<File> listFiles() {
         ArrayList<File> items = new ArrayList();
         File[] newfiles = ocsDir.listFiles();

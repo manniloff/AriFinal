@@ -8,6 +8,7 @@ package com.unifun.ussd.router;
 import com.unifun.ussd.Deployment;
 import java.io.File;
 import java.io.FileInputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -72,15 +73,21 @@ public class Router  implements Deployment {
                 obj = list.getJsonObject(i);
                 
                 String code = obj.getString("pattern");
-                String primaryURL = obj.getString("primary-url");
                 
-                String secondaryURL = null;
-                JsonString v = obj.getJsonString("secondary-url");
-                if (v != null) {
-                    secondaryURL = v.getString();
+                
+                JsonArray primaryDestination = obj.getJsonArray("primary-destination");
+                URL[] pd = new URL[primaryDestination.size()];
+                for (int j = 0; j < primaryDestination.size(); j++) {
+                    pd[i] = new URL(primaryDestination.getString(j));
                 }
                 
-                Route route = new Route(code, primaryURL, secondaryURL);
+                URL secondaryURL = null;
+                JsonString v = obj.getJsonString("failure-destination");
+                if (v != null) {
+                    secondaryURL = new URL(v.getString());
+                }
+                
+                Route route = new Route(code, pd, secondaryURL);
                 routeList.add(route);
                 
                 LOGGER.info("Configured " + route);

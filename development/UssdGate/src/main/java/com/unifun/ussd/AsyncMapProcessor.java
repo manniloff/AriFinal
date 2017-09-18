@@ -18,6 +18,7 @@ import com.unifun.map.JsonSccp;
 import com.unifun.map.JsonSccpAddress;
 import com.unifun.map.JsonTcap;
 import com.unifun.map.JsonTcapDialog;
+import com.unifun.ussd.router.Route;
 import com.unifun.ussd.router.Router;
 import java.nio.charset.Charset;
 import java.util.concurrent.ConcurrentHashMap;
@@ -534,7 +535,8 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
     @Override
     public void onProcessUnstructuredSSRequest(ProcessUnstructuredSSRequest mapMessage) {
         UssMessage msg = new UssMessage(mapMessage, "process-unstructured-ss-request");
-        httpProcessor.processMessage(msg, "http://127.0.0.1:7081/UssdGate/test");
+        Route route = router.find("");        
+        httpProcessor.processMessage(msg, route, route.nextDestination());
     }
 
     @Override

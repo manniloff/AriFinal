@@ -5,36 +5,47 @@
  */
 package com.unifun.ussd.router;
 
+import java.net.URL;
+
 /**
  *
  * @author okulikov
  */
 public class Route implements Comparable {
     private final String pattern;
-    private final String primaryURL;
-    private final String secondaryURL;
+    private final URL[] primaryDestination;
+    private final URL failureDestination;
     
-    public Route(String pattern, String primaryURL, String secondaryURL) {
+    private int k = 0;
+    
+    public Route(String pattern, URL primaryDestination[], URL failureDestination) {
         this.pattern = pattern;
-        this.primaryURL = primaryURL;
-        this.secondaryURL = secondaryURL;
+        this.primaryDestination = primaryDestination;
+        this.failureDestination = failureDestination;
     }
-    
+        
     public String pattern() {
         return pattern;
     }
     
-    public String primaryURL() {
-        return primaryURL;
+    public URL[] primaryDestionation() {
+        return primaryDestination;
     }
     
-    public String secondaryURL() {
-        return secondaryURL;
+    public URL failureDestination() {
+        return failureDestination;
+    }
+    
+    public URL nextDestination() {
+        if (k == primaryDestination.length) {
+            k = 0;
+        }
+        return primaryDestination[k++];
     }
     
     @Override
     public String toString() {
-        return String.format("route:%s, primary-url:%s, secondary-url:%s", pattern, primaryURL,secondaryURL);
+        return String.format("{route:%s, primary-destination:%s, failure-destination:%s}", pattern, primaryDestination,failureDestination);
     }
 
     @Override

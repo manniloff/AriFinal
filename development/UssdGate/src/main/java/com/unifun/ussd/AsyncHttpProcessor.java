@@ -7,10 +7,12 @@ package com.unifun.ussd;
 
 import com.unifun.map.JsonMessage;
 import com.unifun.ussd.context.MapExecutionContext;
+import com.unifun.ussd.router.Route;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.InterruptedIOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URL;
 import javax.json.Json;
 import javax.json.JsonReader;
 import org.apache.http.HttpHost;
@@ -99,15 +101,15 @@ public class AsyncHttpProcessor {
         requester = new HttpAsyncRequester(httpproc);
     }
 
-    public UssMessage processMessage(UssMessage msg, String url) {
+    public void processMessage(UssMessage msg, Route route, URL url) {
 
         long dialogId = msg.getTcap().getDialog().getDialogId();
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Dialog-Id: " + dialogId + " ---> ");
         }
 
-        HttpHost target = new HttpHost("127.0.0.1", 7081, "http");
-        HttpPost post = new HttpPost(url);
+        HttpHost target = new HttpHost(url.getHost(), url.getPort(), url.getProtocol());
+        HttpPost post = new HttpPost(url.toExternalForm());
 
         try {
             post.setEntity(new StringEntity(msg.toString()));
@@ -136,6 +138,7 @@ public class AsyncHttpProcessor {
                 
                 if (statusCode != 200) {
                     //land on spare band
+                    processMessage(msg, route, route.failureDestination());
                     return;
                 }
                 
@@ -145,6 +148,7 @@ public class AsyncHttpProcessor {
                 } catch (IOException e) {
                     //broken pipe and we could not get response
                     //initiate landing on spare band
+                    processMessage(msg, route, route.failureDestination());
                     return;
                 }
                 
@@ -168,9 +172,6 @@ public class AsyncHttpProcessor {
             }
 
         });
-
-
-        return null;
     }
 
     private UssMessage abort(UssMessage req, String message) {

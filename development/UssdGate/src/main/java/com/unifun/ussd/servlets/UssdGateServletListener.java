@@ -18,7 +18,7 @@ import javax.servlet.ServletContextListener;
 import com.unifun.sigtran.adaptor.SigtranStackBean;
 import com.unifun.ussd.AsyncMapProcessor;
 import com.unifun.ussd.DeploymentScaner;
-import com.unifun.ussd.OCSCluster;
+import com.unifun.ussd.OCSQueryCluster;
 import org.apache.log4j.Logger;
 
 public class UssdGateServletListener implements ServletContextListener {
@@ -36,7 +36,7 @@ public class UssdGateServletListener implements ServletContextListener {
         deploymentScaner.start();
 
         try {
-            final OCSCluster ocsCluster = new OCSCluster(System.getProperty("catalina.base") + "/conf");
+            final OCSQueryCluster ocsCluster = new OCSQueryCluster(System.getProperty("catalina.base") + "/conf");
             deploymentScaner.add(ocsCluster);
             sce.getServletContext().setAttribute("ocs.cluster", ocsCluster);
         } catch (Exception e) {
