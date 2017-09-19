@@ -304,7 +304,7 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
                 break;
             case "returnResultLast":
                 JsonReturnResultLast returnResultLast = (JsonReturnResultLast) component.getValue();
-                dialog.addUnstructuredSSResponse(returnResultLast.invokeId(), codingScheme, ussdString);
+                dialog.addUnstructuredSSResponse(returnResultLast.getInvokeId(), codingScheme, ussdString);
                 break;
         }
     }
@@ -426,6 +426,13 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
         return dialog.getVlrAddress() != null && dialog.getMsisdn() != null;
     }
 
+    private String ussdString(UssMessage msg) {
+        JsonComponent component = msg.getTcap().getComponents().get(0);
+        JsonMap map = mapMessage(component);
+        JsonMapOperation op = (JsonMapOperation) map.operation();
+        return op.getUssdString();
+    }
+    
     @Override
     public void onDialogDelimiter(MAPDialog mapDialog) {
     }
@@ -535,7 +542,7 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
     @Override
     public void onProcessUnstructuredSSRequest(ProcessUnstructuredSSRequest mapMessage) {
         UssMessage msg = new UssMessage(mapMessage, "process-unstructured-ss-request");
-        Route route = router.find("");        
+        Route route = router.find(ussdString(msg));        
         httpProcessor.processMessage(msg, route, route.nextDestination());
     }
 
@@ -572,7 +579,8 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
         if (context != null) {
             context.completed(m);
         } else {
-            httpProcessor.processMessage(m, "http://127.0.0.1:7081/UssdGate/test");
+            Route route = router.find(ussdString(m));        
+            httpProcessor.processMessage(m, route, route.nextDestination());
         }
     }
 

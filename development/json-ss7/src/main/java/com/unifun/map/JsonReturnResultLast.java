@@ -15,7 +15,7 @@ import javax.json.JsonObject;
  */
 public class JsonReturnResultLast<T> implements Serializable {
 
-    private final long invokeId;
+    private long invokeId;
     private T component;
 
     public JsonReturnResultLast(long invokeId, T component) {
@@ -30,8 +30,12 @@ public class JsonReturnResultLast<T> implements Serializable {
         }
     }
 
-    public long invokeId() {
+    public long getInvokeId() {
         return invokeId;
+    }
+
+    public void setInvokeId(long invokeId) {
+        this.invokeId = invokeId;
     }
 
     public T component() {

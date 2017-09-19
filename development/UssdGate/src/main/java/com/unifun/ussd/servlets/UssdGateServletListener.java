@@ -5,6 +5,7 @@
  */
 package com.unifun.ussd.servlets;
 
+import com.unifun.map.JsonMessage;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -19,6 +20,15 @@ import com.unifun.sigtran.adaptor.SigtranStackBean;
 import com.unifun.ussd.AsyncMapProcessor;
 import com.unifun.ussd.DeploymentScaner;
 import com.unifun.ussd.OCSQueryCluster;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
 import org.apache.log4j.Logger;
 
 public class UssdGateServletListener implements ServletContextListener {
@@ -43,16 +53,20 @@ public class UssdGateServletListener implements ServletContextListener {
             e.printStackTrace();
         }
 
-        final Runnable resetCounterTask = new Runnable() {
-            public void run() {
-                loadMapListiner(sce);
-            }
+        
+        try {
+            sce.getServletContext().setAttribute("test.menu", this.loadTestMenu());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        final Runnable resetCounterTask = () -> {
+            loadMapListiner(sce);
         };
 
         try {
             exec.submit(resetCounterTask);
         } catch (Exception e) {
-            e.printStackTrace();
             LOGGER.error(e.getMessage());
         }
         LOGGER.debug("Lookup executor started");
@@ -151,4 +165,17 @@ public class UssdGateServletListener implements ServletContextListener {
 
     }
 
+    private Map<String, JsonMessage> loadTestMenu() throws IOException {
+        HashMap<String, JsonMessage> messages = new HashMap();
+        FileInputStream fin = new FileInputStream(System.getProperty("catalina.base") + "/conf/test-menu.json");
+        JsonReader reader = Json.createReader(fin);
+        JsonArray list = reader.readArray();
+        for (int i = 0; i < list.size(); i++) {
+            JsonObject obj = list.getJsonObject(i);
+            String key = obj.getString("ussd-text");
+            JsonMessage msg = new JsonMessage(obj.getJsonObject("message"));
+            messages.put(key, msg);
+        }
+        return Collections.unmodifiableMap(messages);
+    }
 }
