@@ -43,11 +43,14 @@ import org.mobicents.protocols.ss7.map.api.dialog.MAPAbortSource;
 import org.mobicents.protocols.ss7.map.api.dialog.MAPNoticeProblemDiagnostic;
 import org.mobicents.protocols.ss7.map.api.dialog.MAPRefuseReason;
 import org.mobicents.protocols.ss7.map.api.dialog.MAPUserAbortChoice;
+import org.mobicents.protocols.ss7.map.api.errors.AdditionalNetworkResource;
 import org.mobicents.protocols.ss7.map.api.errors.MAPErrorMessage;
+import org.mobicents.protocols.ss7.map.api.errors.MAPErrorMessageFactory;
 import org.mobicents.protocols.ss7.map.api.primitives.AddressNature;
 import org.mobicents.protocols.ss7.map.api.primitives.AddressString;
 import org.mobicents.protocols.ss7.map.api.primitives.ISDNAddressString;
 import org.mobicents.protocols.ss7.map.api.primitives.MAPExtensionContainer;
+import org.mobicents.protocols.ss7.map.api.primitives.NetworkResource;
 import org.mobicents.protocols.ss7.map.api.primitives.NumberingPlan;
 import org.mobicents.protocols.ss7.map.api.primitives.USSDString;
 import org.mobicents.protocols.ss7.map.api.service.supplementary.ActivateSSRequest;
@@ -68,6 +71,7 @@ import org.mobicents.protocols.ss7.map.api.service.supplementary.RegisterPasswor
 import org.mobicents.protocols.ss7.map.api.service.supplementary.RegisterPasswordResponse;
 import org.mobicents.protocols.ss7.map.api.service.supplementary.RegisterSSRequest;
 import org.mobicents.protocols.ss7.map.api.service.supplementary.RegisterSSResponse;
+import org.mobicents.protocols.ss7.map.api.service.supplementary.SupplementaryMessage;
 import org.mobicents.protocols.ss7.map.api.service.supplementary.UnstructuredSSNotifyRequest;
 import org.mobicents.protocols.ss7.map.api.service.supplementary.UnstructuredSSNotifyResponse;
 import org.mobicents.protocols.ss7.map.api.service.supplementary.UnstructuredSSRequest;
@@ -97,7 +101,7 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
     private final SccpProvider sccpProvider;
 
     //Holds execution callback context
-    private final ConcurrentHashMap<Long, ExecutionContext> contextQueue = new ConcurrentHashMap();
+    private final ConcurrentHashMap<Long, ExecutionContext> contextList = new ConcurrentHashMap();
 
     //HTTP related RX/TX 
     private final AsyncHttpProcessor httpProcessor = new AsyncHttpProcessor(this);
@@ -183,7 +187,7 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
 
             //assign unique identifier to context and store context.
             context.setId(mapDialog.getLocalDialogId());
-            contextQueue.put(mapDialog.getLocalDialogId(), context);
+            contextList.put(mapDialog.getLocalDialogId(), context);
 
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info(String.format("(TC-%s): {%s} : %s ---> %s", tcap.getType(), component.getType(), map.operationName(), context.toString()));
@@ -463,7 +467,7 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
 
     @Override
     public void onDialogClose(MAPDialog mapDialog) {
-        ExecutionContext context = contextQueue.remove(mapDialog.getLocalDialogId());
+        ExecutionContext context = contextList.remove(mapDialog.getLocalDialogId());
         LOGGER.info("(TC-Close) <---> " + ctxName(context, mapDialog.getLocalDialogId()));
     }
 
@@ -473,13 +477,13 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
 
     @Override
     public void onDialogRelease(MAPDialog mapDialog) {
-        ExecutionContext context = contextQueue.remove(mapDialog.getLocalDialogId());
+        ExecutionContext context = contextList.remove(mapDialog.getLocalDialogId());
         LOGGER.info("(TC-Release) <---> " + ctxName(context, mapDialog.getLocalDialogId()));
     }
 
     @Override
     public void onDialogTimeout(MAPDialog mapDialog) {
-        ExecutionContext context = contextQueue.remove(mapDialog.getLocalDialogId());
+        ExecutionContext context = contextList.remove(mapDialog.getLocalDialogId());
         LOGGER.info("(TC-Timeout) <---> " + ctxName(context, mapDialog.getLocalDialogId()));
     }
 
@@ -541,9 +545,31 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
 
     @Override
     public void onProcessUnstructuredSSRequest(ProcessUnstructuredSSRequest mapMessage) {
-        UssMessage msg = new UssMessage(mapMessage, "process-unstructured-ss-request");
-        Route route = router.find(ussdString(msg));        
-        httpProcessor.processMessage(msg, route, route.nextDestination());
+        //convert message into json
+        UssMessage msg = convert(mapMessage, "process-unstructured-ss-request");
+
+        if (msg == null) {
+            replySystemFailure(mapMessage);
+            return;
+        }
+        
+        //print entire message as trace if enabled
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.debug("RX :" + msg.toString());
+        }
+        
+        //print log output
+        if (LOGGER.isInfoEnabled()) {
+            info(msg, null);
+        }
+        
+        try {
+            Route route = router.find(ussdString(msg));        
+            httpProcessor.processMessage(msg, route, route.nextDestination());
+        } catch (Exception e) {
+            LOGGER.error("Could not forward over HTTP", e);
+            this.replySystemFailure(mapMessage);
+        }
     }
 
     @Override
@@ -552,10 +578,10 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
         UssMessage m = new UssMessage(msg, "process-unstructured-ss-request");
 
         JsonComponent component = m.getTcap().getComponents().get(0);
-        ExecutionContext context = contextQueue.get(msg.getMAPDialog().getLocalDialogId());
+        ExecutionContext context = contextList.get(msg.getMAPDialog().getLocalDialogId());
         
         if (LOGGER.isInfoEnabled()) {
-            LOGGER.info(String.format("(TC-%s):{%s}: unstructured-ss-request <--- %s",
+            LOGGER.info(String.format("(TC-%s):{%s}: process-unstructured-ss-request <--- %s",
                     m.getTcap().getType(), component.getType(), ctxName(context, msg.getMAPDialog().getLocalDialogId())));
         }
 
@@ -567,13 +593,10 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
     @Override
     public void onUnstructuredSSRequest(UnstructuredSSRequest msg) {
         UssMessage m = new UssMessage(msg, "unstructured-ss-request");
-        ExecutionContext context = contextQueue.get(msg.getMAPDialog().getLocalDialogId());
-
-        JsonComponent component = m.getTcap().getComponents().get(0);
+        ExecutionContext context = contextList.get(msg.getMAPDialog().getLocalDialogId());
 
         if (LOGGER.isInfoEnabled()) {
-            LOGGER.info(String.format("(TC-%s):{%s}: unstructured-ss-request <--- %s",
-                    m.getTcap().getType(), component.getType(), ctxName(context, msg.getMAPDialog().getLocalDialogId())));
+            info(m, context);
         }
 
         if (context != null) {
@@ -589,7 +612,7 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
         LOGGER.info("<--- " + msg.getMessageType().name());
         UssMessage m = new UssMessage(msg, "unstructured-ss-request");
 
-        ExecutionContext context = contextQueue.get(msg.getMAPDialog().getLocalDialogId());
+        ExecutionContext context = contextList.get(msg.getMAPDialog().getLocalDialogId());
         if (context == null) {
             LOGGER.warn("Process-unstructured-ss-request: Out of context: " + msg.getMAPDialog().getLocalDialogId());
             return;
@@ -608,6 +631,20 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
 
     @Override
     public void onErrorComponent(MAPDialog mapDialog, Long invokeId, MAPErrorMessage mapErrorMessage) {
+        JsonMessage msg = new JsonMessage();
+        JsonTcap tcap = new JsonTcap();
+        
+        tcap.setType("Error");
+        tcap.setAbortMessage(mapErrorMessage.toString());
+        
+        msg.setTcap(tcap);
+        ExecutionContext context = contextList.get(mapDialog.getLocalDialogId());
+        if (context == null) {
+            LOGGER.warn("Error component: " + mapDialog.getLocalDialogId());
+            return;
+        }
+
+        context.completed(new UssMessage(msg));
     }
 
     @Override
@@ -622,9 +659,35 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
     public void onMAPMessage(MAPMessage mapMessage) {
     }
 
+    private UssMessage convert(SupplementaryMessage msg, String evt) {
+        try {
+            return new UssMessage(msg, evt);
+        } catch (Exception e) {
+            LOGGER.error("Could not convert into json format", e);
+            return null;
+        }
+    }
+    
     private String ctxName(ExecutionContext context, long dialogId) {
         return context != null
                 ? context.toString()
                 : "ExecutionContext(NULL, " + dialogId + ")";
+    }
+    
+    private void replySystemFailure(SupplementaryMessage msg) {
+        try {
+            MAPErrorMessageFactory f = mapProvider.getMAPErrorMessageFactory();
+            MAPErrorMessage m = f.createMAPErrorMessageSystemFailure(3, NetworkResource.eir, AdditionalNetworkResource.nplr, null);
+            msg.getMAPDialog().sendErrorComponent(msg.getInvokeId(), m);
+            msg.getMAPDialog().close(false);
+        } catch (Exception e) {
+            LOGGER.error("Could not send ERROR message", e);
+        }
+    }
+    
+    private void info(UssMessage m, ExecutionContext context) {
+        JsonComponent component = m.getTcap().getComponents().get(0);
+        LOGGER.info(String.format("(TC-%s):{%s}: unstructured-ss-request <--- %s",
+                m.getTcap().getType(), component.getType(), ctxName(context, m.getTcap().getDialog().getDialogId())));
     }
 }

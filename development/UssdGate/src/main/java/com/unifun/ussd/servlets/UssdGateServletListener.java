@@ -20,6 +20,7 @@ import com.unifun.sigtran.adaptor.SigtranStackBean;
 import com.unifun.ussd.AsyncMapProcessor;
 import com.unifun.ussd.DeploymentScaner;
 import com.unifun.ussd.OCSQueryCluster;
+import com.unifun.ussd.TestMenu;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Collections;
@@ -46,7 +47,7 @@ public class UssdGateServletListener implements ServletContextListener {
         deploymentScaner.start();
 
         try {
-            final OCSQueryCluster ocsCluster = new OCSQueryCluster(System.getProperty("catalina.base") + "/conf");
+            final OCSQueryCluster ocsCluster = new OCSQueryCluster(System.getProperty("catalina.base") + "/conf/test-menu.json");
             deploymentScaner.add(ocsCluster);
             sce.getServletContext().setAttribute("ocs.cluster", ocsCluster);
         } catch (Exception e) {
@@ -55,7 +56,8 @@ public class UssdGateServletListener implements ServletContextListener {
 
         
         try {
-            sce.getServletContext().setAttribute("test.menu", this.loadTestMenu());
+            final TestMenu testMenu = new TestMenu(System.getProperty("catalina.base") + "/conf");
+            sce.getServletContext().setAttribute("test.menu", testMenu);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -165,17 +167,4 @@ public class UssdGateServletListener implements ServletContextListener {
 
     }
 
-    private Map<String, JsonMessage> loadTestMenu() throws IOException {
-        HashMap<String, JsonMessage> messages = new HashMap();
-        FileInputStream fin = new FileInputStream(System.getProperty("catalina.base") + "/conf/test-menu.json");
-        JsonReader reader = Json.createReader(fin);
-        JsonArray list = reader.readArray();
-        for (int i = 0; i < list.size(); i++) {
-            JsonObject obj = list.getJsonObject(i);
-            String key = obj.getString("ussd-text");
-            JsonMessage msg = new JsonMessage(obj.getJsonObject("message"));
-            messages.put(key, msg);
-        }
-        return Collections.unmodifiableMap(messages);
-    }
 }

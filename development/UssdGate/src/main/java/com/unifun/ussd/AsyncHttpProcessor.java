@@ -105,7 +105,7 @@ public class AsyncHttpProcessor {
 
         long dialogId = msg.getTcap().getDialog().getDialogId();
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Dialog-Id: " + dialogId + " ---> ");
+            LOGGER.debug("Dialog-Id: " + dialogId + " ---> " + url);
         }
 
         HttpHost target = new HttpHost(url.getHost(), url.getPort(), url.getProtocol());

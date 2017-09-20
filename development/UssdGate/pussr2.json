@@ -57,9 +57,9 @@
                     "value": {
                         "invokeID": 1,
                         "component": {
-                            "operation": "unstructured-ss-request",
+                            "operation": "process-unstructured-ss-request",
                             "args": {
-                                "ussdString": "*643#",
+                                "ussdString": "\\*643#",
 				"coding-scheme" : {
 					"coding-group" : "GeneralGsm7",
 					"language" : "UCS2"

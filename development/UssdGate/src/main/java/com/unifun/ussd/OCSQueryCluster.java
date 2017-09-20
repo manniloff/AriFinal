@@ -133,11 +133,13 @@ public class OCSQueryCluster implements Deployment {
     private ArrayList<File> listFiles() {
         ArrayList<File> items = new ArrayList();
         File[] newfiles = ocsDir.listFiles();
-        for (File newfile : newfiles) {
-            if (newfile.getName().startsWith("ocs-")) {
-                items.add(newfile);
+        if (newfiles != null) {
+            for (File newfile : newfiles) {
+                if (newfile.getName().startsWith("ocs-")) {
+                    items.add(newfile);
+                }
             }
         }
         return items;
-    } 
+    }
 }

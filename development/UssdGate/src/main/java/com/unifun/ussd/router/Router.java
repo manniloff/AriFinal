@@ -74,11 +74,11 @@ public class Router  implements Deployment {
                 
                 String code = obj.getString("pattern");
                 
-                
-                JsonArray primaryDestination = obj.getJsonArray("primary-destination");
-                URL[] pd = new URL[primaryDestination.size()];
-                for (int j = 0; j < primaryDestination.size(); j++) {
-                    pd[i] = new URL(primaryDestination.getString(j));
+                JsonObject primaryDestination = obj.getJsonObject("primary-destination");
+                JsonArray urls = primaryDestination.getJsonArray("url");
+                URL[] pd = new URL[urls.size()];
+                for (int j = 0; j < urls.size(); j++) {
+                    pd[i] = new URL(urls.getString(j));
                 }
                 
                 URL secondaryURL = null;

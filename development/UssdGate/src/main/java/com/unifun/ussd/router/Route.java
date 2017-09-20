@@ -45,7 +45,7 @@ public class Route implements Comparable {
     
     @Override
     public String toString() {
-        return String.format("{route:%s, primary-destination:%s, failure-destination:%s}", pattern, primaryDestination,failureDestination);
+        return String.format("{pattern:%s}", pattern);
     }
 
     @Override

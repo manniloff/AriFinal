@@ -57,7 +57,6 @@ public class DeploymentScaner implements Runnable {
 
     @Override
     public void run() {
-        LOGGER.info("deployements size: " + deployments.size());
         synchronized (deployments) {
             try {
             deployments.stream().filter((deployment) -> (deployment.isModified())).forEach((deployment) -> {
