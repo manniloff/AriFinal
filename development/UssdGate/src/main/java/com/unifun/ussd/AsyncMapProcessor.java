@@ -84,6 +84,7 @@ import org.mobicents.protocols.ss7.sccp.impl.parameter.SccpAddressImpl;
 import org.mobicents.protocols.ss7.sccp.parameter.GlobalTitle;
 import org.mobicents.protocols.ss7.sccp.parameter.ParameterFactory;
 import org.mobicents.protocols.ss7.sccp.parameter.SccpAddress;
+import org.mobicents.protocols.ss7.tcap.api.MessageType;
 import org.mobicents.protocols.ss7.tcap.asn.ApplicationContextName;
 import org.mobicents.protocols.ss7.tcap.asn.comp.Problem;
 
@@ -158,12 +159,11 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
         try {
             //verify parameters
             assert msg != null : "Message can not be null";
-            assert context != null : "Execution context not specified";
 
             //break original message into parts
             JsonTcap tcap = msg.getTcap();
             JsonSccp sccp = msg.getSccp();
-
+            
             //extract component from TCAP part
             JsonComponent component = tcap.getComponents().get(0);
             JsonMap map = mapMessage(component);
@@ -186,11 +186,13 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
             }
 
             //assign unique identifier to context and store context.
-            context.setId(mapDialog.getLocalDialogId());
-            contextList.put(mapDialog.getLocalDialogId(), context);
+            if (context != null) {
+                context.setId(mapDialog.getLocalDialogId());
+                contextList.put(mapDialog.getLocalDialogId(), context);
+            }
 
             if (LOGGER.isInfoEnabled()) {
-                LOGGER.info(String.format("(TC-%s): {%s} : %s ---> %s", tcap.getType(), component.getType(), map.operationName(), context.toString()));
+                LOGGER.info(String.format("(TC-%s): {%s} : %s ---> %s", tcap.getType(), component.getType(), map.operationName(), ctxName(context, mapDialog.getLocalDialogId())));
             }
 
             //wrap with suitable component and send the message
@@ -212,7 +214,9 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
             JsonMessage abort = new JsonMessage();
             abort.setTcap(tcap);
 
-            context.completed(new UssMessage(abort));
+            if (context != null) {
+                context.completed(new UssMessage(abort));
+            }
         }
     }
 
@@ -560,11 +564,14 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
         
         //print log output
         if (LOGGER.isInfoEnabled()) {
-            info(msg, null);
+            info(msg, null, "process-unstructured-ss-request");
         }
         
         try {
-            Route route = router.find(ussdString(msg));        
+            Route route = router.find(ussdString(msg)); 
+            if (route == null) {
+                return;
+            }
             httpProcessor.processMessage(msg, route, route.nextDestination());
         } catch (Exception e) {
             LOGGER.error("Could not forward over HTTP", e);
@@ -596,7 +603,7 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
         ExecutionContext context = contextList.get(msg.getMAPDialog().getLocalDialogId());
 
         if (LOGGER.isInfoEnabled()) {
-            info(m, context);
+            info(m, context, "unstructured-ss-request");
         }
 
         if (context != null) {
@@ -685,9 +692,9 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
         }
     }
     
-    private void info(UssMessage m, ExecutionContext context) {
+    private void info(UssMessage m, ExecutionContext context, String operation) {
         JsonComponent component = m.getTcap().getComponents().get(0);
-        LOGGER.info(String.format("(TC-%s):{%s}: unstructured-ss-request <--- %s",
-                m.getTcap().getType(), component.getType(), ctxName(context, m.getTcap().getDialog().getDialogId())));
+        LOGGER.info(String.format("(TC-%s):{%s}: %s <--- %s",
+                m.getTcap().getType(), component.getType(), operation, ctxName(context, m.getTcap().getDialog().getDialogId())));
     }
 }

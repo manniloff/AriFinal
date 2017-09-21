@@ -38,6 +38,7 @@ import org.mobicents.protocols.ss7.sccp.parameter.SccpAddress;
 public class UssMessage implements Serializable {
 
     private JsonMessage jsonMessage;
+    private long invokeId;
     
     public UssMessage() {
     }
@@ -57,6 +58,8 @@ public class UssMessage implements Serializable {
      * @param operationName 
      */
     public UssMessage(SupplementaryMessage mapMessage, String operationName) {
+        this.invokeId = mapMessage.getInvokeId();
+        
         final JsonSccp sccp = new JsonSccp();        
         sccp.setCallingPartyAddress(valueOf(mapMessage.getMAPDialog().getLocalAddress()));
         sccp.setCalledPartyAddress(valueOf(mapMessage.getMAPDialog().getRemoteAddress()));
@@ -164,6 +167,10 @@ public class UssMessage implements Serializable {
         jsonMessage = new JsonMessage();
         jsonMessage.setSccp(sccp);
         jsonMessage.setTcap(tcap);
+    }
+    
+    public long invokeId() {
+        return invokeId;
     }
     
     /**

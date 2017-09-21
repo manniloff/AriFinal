@@ -1,7 +1,11 @@
 {
     "menu": [
-        {
-            "ussd-text": "642",
+        {   
+            "name" : "welcome",
+            "initial" : true,
+            "final" : false,
+            "transition":"page-1",
+            "ussd-text": "\\*643#",
             "message": {
                 "tcap": {
                     "type": "Continue",
@@ -14,9 +18,9 @@
                                 "value": {
                                     "invokeID": 1,
                                     "component": {
-                                        "operation": "process-unstructured-ss-request",
+                                        "operation": "unstructured-ss-request",
                                         "args": {
-                                            "ussdString": "*643#",
+                                            "ussdString": "*Select 1",
                                             "coding-scheme": {
                                                 "coding-group": "GeneralGsm7",
                                                 "language": "UCS2"
@@ -32,6 +36,10 @@
             }
         },
         {
+            "name" : "page-1",
+            "initial" : false,
+            "final" : true,
+            "transition":"page-1",
             "ussd-text": "1",
             "message": {
                 "tcap": {

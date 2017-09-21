@@ -1,53 +1,54 @@
+
 {
     "sccp": {
         "calling-party-address": {
-            "routing-indicator": "ROUTING_BASED_ON_GLOBAL_TITLE",
+            "routing-indicator": "Route-on-GT",
             "global-title-indicator": "0100",
             "ssn": 6,
             "global-title": {
-                "numbering-plan": "ISDN_TELEPHONY",
+                "numbering-plan": "isdn",
                 "encoding-schema": "BCD",
-                "nature-of-address-indicator": "INTERNATIONAL",
-                "digits": "9023629581"
+                "nature-of-address-indicator": "International",
+                "digits": "1234567"
             }
         },
         "called-party-address": {
-            "routing-indicator": "ROUTING_BASED_ON_GLOBAL_TITLE",
+            "routing-indicator": "Route-on-SSN",
             "global-title-indicator": "0100",
             "ssn": 6,
             "global-title": {
-                "numbering-plan": "ISDN_TELEPHONY",
+                "numbering-plan": "isdn",
                 "encoding-schema": "BCD",
-                "nature-of-address-indicator": "INTERNATIONAL",
-                "digits": "9023629580"
+                "nature-of-address-indicator": "International",
+                "digits": "1234567"
             }
         }
 
     },
     "tcap": {
-        "type": "Begin",
+        "type": "begin",
         "dialog": {
-            "dialogId": -1,
+            "dialogId": 123,
             "application-context-name": "",
             "origination-reference": {
                 "address": "123",
-                "nature-of-address": "international_number",
-                "numbering-plan": "ISDN"
+                "nature-of-address": "",
+                "numbering-plan": ""
             },
             "destination-reference": {
                 "address": "1234",
-                "nature-of-address": "international_number",
-                "numbering-plan": "ISDN"
+                "nature-of-address": "",
+                "numbering-plan": ""
             },
             "msisdn": {
                 "address": "234",
-                "nature-of-address": "international_number",
-                "numbering-plan": "ISDN"
+                "nature-of-address": "",
+                "numbering-plan": ""
             },
             "vlr-address": {
                 "address": "567",
-                "nature-of-address": "international_number",
-                "numbering-plan": "ISDN"
+                "nature-of-address": "",
+                "numbering-plan": ""
 
             }
         },
@@ -60,14 +61,10 @@
                             "operation": "process-unstructured-ss-request",
                             "args": {
                                 "ussdString": "*643#",
-				"coding-scheme" : {
-					"coding-group" : "GeneralGsm7",
-					"language" : "UCS2"
-				},
                                 "msisdn": {
                                     "address": "9023629581",
-                                    "nature-of-address": "international_number",
-                                    "numbering-plan": "ISDN"
+                                    "nature-of-address": "",
+                                    "numbering-plan": ""
                                 }
                             }
                         }

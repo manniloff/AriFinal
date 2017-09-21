@@ -5,7 +5,6 @@
  */
 package com.unifun.ussd.servlets;
 
-import com.unifun.map.JsonMessage;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -21,15 +20,6 @@ import com.unifun.ussd.AsyncMapProcessor;
 import com.unifun.ussd.DeploymentScaner;
 import com.unifun.ussd.OCSQueryCluster;
 import com.unifun.ussd.TestMenu;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
 import org.apache.log4j.Logger;
 
 public class UssdGateServletListener implements ServletContextListener {
@@ -56,8 +46,9 @@ public class UssdGateServletListener implements ServletContextListener {
 
         
         try {
-            final TestMenu testMenu = new TestMenu(System.getProperty("catalina.base") + "/conf");
+            final TestMenu testMenu = new TestMenu(System.getProperty("catalina.base") + "/conf/test-menu.json");
             sce.getServletContext().setAttribute("test.menu", testMenu);
+            deploymentScaner.add(testMenu);
         } catch (Exception e) {
             e.printStackTrace();
         }

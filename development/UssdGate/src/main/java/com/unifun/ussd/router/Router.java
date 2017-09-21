@@ -50,7 +50,7 @@ public class Router  implements Deployment {
      */
     public Route find(String selector) {
         for (Route route : routes.get()) {
-            if (route.pattern().matches(selector)) {
+            if (selector.matches(route.pattern())) {
                 return route;
             }
         }

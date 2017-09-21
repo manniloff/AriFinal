@@ -5,8 +5,15 @@
  */
 package com.unifun.ussd;
 
+import com.unifun.map.JsonComponent;
+import com.unifun.map.JsonComponents;
+import com.unifun.map.JsonDataCodingScheme;
+import com.unifun.map.JsonMap;
+import com.unifun.map.JsonMapOperation;
 import com.unifun.map.JsonMessage;
-import com.unifun.ussd.context.MapExecutionContext;
+import com.unifun.map.JsonReturnResultLast;
+import com.unifun.map.JsonTcap;
+import com.unifun.map.JsonTcapDialog;
 import com.unifun.ussd.router.Route;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -15,6 +22,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import javax.json.Json;
 import javax.json.JsonReader;
+import javax.json.stream.JsonParsingException;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -70,18 +78,18 @@ public class AsyncHttpProcessor {
 
         // Create client-side HTTP protocol handler
         HttpAsyncRequestExecutor protocolHandler = new HttpAsyncRequestExecutor();
-        
+
         // Create client-side I/O event dispatch
         final IOEventDispatch ioEventDispatch = new DefaultHttpClientIODispatch(
                 protocolHandler,
                 ConnectionConfig.DEFAULT);
-        
+
         // Create client-side I/O reactor
         ioReactor = new DefaultConnectingIOReactor();
-        
+
         // Create HTTP connection pool
         pool = new BasicNIOConnPool(ioReactor, ConnectionConfig.DEFAULT);
-        
+
         // Limit total number of connections
         pool.setDefaultMaxPerRoute(200);
         pool.setMaxTotal(200);
@@ -102,20 +110,28 @@ public class AsyncHttpProcessor {
     }
 
     public void processMessage(UssMessage msg, Route route, URL url) {
+        execute(msg, url, new PrimaryPathResponseHandler(msg, route));
+    }
 
-        long dialogId = msg.getTcap().getDialog().getDialogId();
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Dialog-Id: " + dialogId + " ---> " + url);
-        }
-
+    private void execute(UssMessage msg, URL url, FutureCallback<HttpResponse> callback) {
         HttpHost target = new HttpHost(url.getHost(), url.getPort(), url.getProtocol());
         HttpPost post = new HttpPost(url.toExternalForm());
+        post.setHeader("Content-Type", "application/json");
 
+        long dialogId = msg.getTcap().getDialog().getDialogId();
+
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("(Dialog-Id): " + dialogId + " ---> " + url.toExternalForm());
+        }
+
+        String content = msg.toString();
+        LOGGER.info(content);
         try {
-            post.setEntity(new StringEntity(msg.toString()));
+            post.setEntity(new StringEntity(content));
         } catch (UnsupportedEncodingException e) {
         }
 
+//        post.setHeader("Content-Length", Integer.toString(content.length()));
         HttpCoreContext coreContext = HttpCoreContext.create();
         requester.execute(
                 new BasicAsyncRequestProducer(target, post),
@@ -123,63 +139,186 @@ public class AsyncHttpProcessor {
                 pool,
                 coreContext,
                 // Handle HTTP response from a callback
-                new FutureCallback<HttpResponse>() {
-
-            @Override
-            public void completed(final HttpResponse response) {
-                //we have response from external HHTP server
-                //and trying to forward it over map
-                MapExecutionContext context = new MapExecutionContext(mapProcessor);
-                
-                //read and parse messge first
-                JsonMessage resp;
-                
-                int statusCode = response.getStatusLine().getStatusCode();
-                
-                if (statusCode != 200) {
-                    //land on spare band
-                    processMessage(msg, route, route.failureDestination());
-                    return;
-                }
-                
-                try {
-                    JsonReader reader = Json.createReader(new InputStreamReader(response.getEntity().getContent()));
-                    resp = new JsonMessage(reader.readObject());
-                } catch (IOException e) {
-                    //broken pipe and we could not get response
-                    //initiate landing on spare band
-                    processMessage(msg, route, route.failureDestination());
-                    return;
-                }
-                
-                //we got response finally. is this response positive?
-                try {
-                    context.setId(resp.getTcap().getDialog().getDialogId());
-                    mapProcessor.send(new UssMessage(resp), context);
-                } catch (Throwable t) {
-                    //map issue
-                }
-            }
-
-            @Override
-            public void failed(final Exception ex) {
-                System.out.println(target + "->" + ex);
-            }
-
-            @Override
-            public void cancelled() {
-                System.out.println(target + " cancelled");
-            }
-
-        });
+                callback);
     }
 
-    private UssMessage abort(UssMessage req, String message) {
+    private class PrimaryPathResponseHandler implements FutureCallback<HttpResponse> {
+
+        private final UssMessage msg;
+        private final Route route;
+        private long dialogId;
+
+        public PrimaryPathResponseHandler(UssMessage msg, Route route) {
+            this.msg = msg;
+            this.route = route;
+        }
+
+        @Override
+        public void completed(HttpResponse response) {
+            int statusCode = response.getStatusLine().getStatusCode();
+            dialogId = msg.getTcap().getDialog().getDialogId();
+
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER.info("(Dialog-Id): " + dialogId + " <--- " + response.getStatusLine());
+            }
+
+            JsonMessage resp;
+
+            switch (statusCode) {
+                case 200:
+                    try {
+                        JsonReader reader = Json.createReader(new InputStreamReader(response.getEntity().getContent()));
+                        resp = new JsonMessage(reader.readObject());
+                        mapProcessor.send(new UssMessage(resp), null);
+                    } catch (IOException e) {
+                        //broken pipe and we could not get response
+                        //initiate landing on spare band
+                        LOGGER.error("(Dialog-Id): " + dialogId + "Broken pipe: ", e);
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("(Dialog-Id): " + dialogId + " trying spare destination");
+                        }
+
+                        execute(msg, route.failureDestination(), new FailurePathResponseHandler(msg));
+                    } catch (JsonParsingException e) {
+                        LOGGER.error("(Dialog-Id): " + dialogId + "Bad response format: ", e);
+
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("(Dialog-Id): " + dialogId + " trying spare destination");
+                        }
+
+                        execute(msg, route.failureDestination(), new FailurePathResponseHandler(msg));
+                    } catch (UnsupportedOperationException e) {
+                        LOGGER.error("(Dialog-Id): " + dialogId + "Could not send response back ", e);
+                    } catch (RuntimeException e) {
+                        LOGGER.error("(Dialog-Id): " + dialogId + "Unexpected error: ", e);
+
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("(Dialog-Id): " + dialogId + " trying spare destination");
+                        }
+
+                        execute(msg, route.failureDestination(), new FailurePathResponseHandler(msg));
+                    }
+                    break;
+                default:
+                    if (LOGGER.isInfoEnabled()) {
+                        LOGGER.info("(Dialog-Id): " + dialogId + " trying spare destination");
+                    }
+                    execute(msg, route.failureDestination(), new FailurePathResponseHandler(msg));
+            }
+
+        }
+
+        @Override
+        public void failed(Exception e) {
+            LOGGER.error("(Dialog-Id): " + dialogId + "Tranmission failure: ", e);
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER.info("(Dialog-Id): " + dialogId + " trying spare destination");
+            }
+            execute(msg, route.failureDestination(), new FailurePathResponseHandler(msg));
+        }
+
+        @Override
+        public void cancelled() {
+            LOGGER.info("(Dialog-Id): " + dialogId + "Tranmission has been canceled ");
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER.info("(Dialog-Id): " + dialogId + " trying spare destination");
+            }
+            execute(msg, route.failureDestination(), new FailurePathResponseHandler(msg));
+        }
+
+    }
+
+    private class FailurePathResponseHandler implements FutureCallback<HttpResponse> {
+
+        private final UssMessage msg;
+        private long dialogId;
+
+        public FailurePathResponseHandler(UssMessage msg) {
+            this.msg = msg;
+        }
+
+        @Override
+        public void completed(HttpResponse response) {
+            int statusCode = response.getStatusLine().getStatusCode();
+            dialogId = msg.getTcap().getDialog().getDialogId();
+
+            JsonMessage resp;
+            switch (statusCode) {
+                case 200:
+                    try {
+                        JsonReader reader = Json.createReader(new InputStreamReader(response.getEntity().getContent()));
+                        resp = new JsonMessage(reader.readObject());
+                    } catch (IOException e) {
+                        //broken pipe and we could not get response
+                        //initiate landing on spare band
+                        LOGGER.error("(Dialog-Id): " + dialogId + "Broken pipe: ", e);
+                        resp = errorResponse(msg, "Service temporary unavailable");
+                    } catch (JsonParsingException e) {
+                        LOGGER.error("(Dialog-Id): " + dialogId + "Bad response format: ", e);
+                        resp = errorResponse(msg, "Service temporary unavailable");
+                    } catch (UnsupportedOperationException e) {
+                        LOGGER.error("(Dialog-Id): " + dialogId + "Could not send response back ", e);
+                        resp = errorResponse(msg, "Service temporary unavailable");
+                    } catch (RuntimeException e) {
+                        LOGGER.error("(Dialog-Id): " + dialogId + "Unexpected error: ", e);
+                        resp = errorResponse(msg, "Service temporary unavailable");
+                    }
+                    break;
+                default:
+                    if (LOGGER.isInfoEnabled()) {
+                        LOGGER.info("(Dialog-Id): " + dialogId + " send error message");
+                    }
+                    resp = errorResponse(msg, "Service temporary unavailable");
+            }
+
+            mapProcessor.send(new UssMessage(resp), null);
+        }
+
+        @Override
+        public void failed(Exception e) {
+            LOGGER.error("(Dialog-Id): " + dialogId + "Tranmission failure: ", e);
+        }
+
+        @Override
+        public void cancelled() {
+            LOGGER.error("(Dialog-Id): " + dialogId + "Tranmission canceled");
+        }
+
+    }
+
+    private JsonMessage errorResponse(UssMessage msg, String message) {
         JsonMessage resp = new JsonMessage();
-        resp.setSccp(req.getSccp());
-        resp.setTcap(req.getTcap());
-        resp.getTcap().setType(MessageType.Abort.name());
-        resp.getTcap().setAbortMessage(message);
-        return new UssMessage(resp);
+        resp.setTcap(msg.getTcap());
+        resp.getTcap().setType(MessageType.End.name());
+
+        JsonDataCodingScheme codingScheme = new JsonDataCodingScheme();
+        codingScheme.setCodingGroup("GeneralGsm7");
+        codingScheme.setLanguage("UCS2");
+
+        JsonMapOperation op = new JsonMapOperation();
+        op.setUssdString(message);
+        op.setCodingScheme(codingScheme);
+
+        JsonMap map = new JsonMap("unstructured-ss-request", op);
+        JsonReturnResultLast returnResultLast = new JsonReturnResultLast(msg.invokeId(), map);
+
+        JsonComponent component = new JsonComponent();
+        component.setType("returnResultLast");
+        component.setValue(returnResultLast);
+
+        JsonComponents components = new JsonComponents();
+        components.add(component);
+
+        JsonTcapDialog dialog = new JsonTcapDialog();
+        dialog.setDialogId(msg.getTcap().getDialog().getDialogId());
+
+        JsonTcap tcap = new JsonTcap();
+        tcap.setType(MessageType.End.name());
+        tcap.setDialog(dialog);
+        tcap.setComponents(components);
+
+        resp.setTcap(tcap);
+        return resp;
     }
+
 }

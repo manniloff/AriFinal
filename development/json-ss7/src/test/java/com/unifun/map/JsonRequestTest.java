@@ -101,4 +101,36 @@ public class JsonRequestTest {
         assertTrue(tcap.getDialog() == null);
     }
     
+    @Test
+    public void testRegexp() {
+        InputStream in = getClass().getResourceAsStream("/message_2.json");
+        JsonReader reader = Json.createReader(new InputStreamReader(in));
+        JsonObject obj = reader.readObject();
+        
+        JsonMessage req = new JsonMessage(obj);
+        JsonTcap tcap = req.getTcap();
+        
+        JsonInvoke invoke = (JsonInvoke) tcap.getComponents().get(0).getValue();
+        JsonMap map = (JsonMap) invoke.component();
+        
+        JsonMapOperation op = (JsonMapOperation) map.operation();
+        String t1 = op.getUssdString();
+
+        in = getClass().getResourceAsStream("/message_3.json");
+        reader = Json.createReader(new InputStreamReader(in));
+        obj = reader.readObject();
+        
+        req = new JsonMessage(obj);
+        tcap = req.getTcap();
+        
+        invoke = (JsonInvoke) tcap.getComponents().get(0).getValue();
+        map = (JsonMap) invoke.component();
+        
+        op = (JsonMapOperation) map.operation();
+        String pattern = op.getUssdString();
+        
+        
+        System.out.println(t1 + "-------------" + pattern);
+        System.out.println(t1.matches(pattern));
+    }
 }
