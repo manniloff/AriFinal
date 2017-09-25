@@ -55,9 +55,10 @@ public class UssMessage implements Serializable {
     /**
      * Creates instance of this message 
      * @param mapMessage 
+     * @param tcapDialog 
      * @param operationName 
      */
-    public UssMessage(SupplementaryMessage mapMessage, String operationName) {
+    public UssMessage(SupplementaryMessage mapMessage, JsonTcapDialog tcapDialog, String operationName) {
         this.invokeId = mapMessage.getInvokeId();
         
         final JsonSccp sccp = new JsonSccp();        
@@ -151,14 +152,7 @@ public class UssMessage implements Serializable {
         
         AddressString origReference = mapMessage.getMAPDialog().getReceivedDestReference();        
         AddressString destReference = mapMessage.getMAPDialog().getReceivedDestReference();
-        
-        final JsonTcapDialog tcapDialog = new JsonTcapDialog();
-        
-        tcapDialog.setDialogId(mapMessage.getMAPDialog().getLocalDialogId());
-        tcapDialog.setOriginationReference(valueOf(origReference));
-        tcapDialog.setDestinationReference(valueOf(destReference));
                 
-        
         final JsonTcap tcap = new JsonTcap();
         tcap.setDialog(tcapDialog);  
         tcap.setType(mapMessage.getMAPDialog().getTCAPMessageType().name());
