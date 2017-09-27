@@ -38,7 +38,7 @@ public class SigtranObjectFactory implements ObjectFactory {
         logger.info("Loading SigtranObjectFactory.");
         logger.info("Initiating SigtranConnectorBean");
         String workerThreads = "16";
-    	String configPath = "../logs/cfg";
+    	String configPath = "../temp";
     	String log4jcfg = "../conf/log4j.properties";
     	String logbackcfg = "../conf/logback.xml";
     	Reference ref = (Reference) obj;
