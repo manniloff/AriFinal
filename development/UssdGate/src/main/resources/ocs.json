@@ -2,23 +2,23 @@
     "sccp": {
         "calling-party-address": {
             "routing-indicator": "ROUTING_BASED_ON_GLOBAL_TITLE",
-            "global-title-indicator": "GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_NUMBERING_PLAN_ENCODING_SCHEME_AND_NATURE_OF_ADDRESS",
+            "global-title-indicator": "0100",
             "ssn": 147,
             "global-title": {
-                "digits": "22505987300",
+                "digits": "22505987070",
                 "numbering-plan": "ISDN_TELEPHONY",
-                "encoding-schema": "BCD_ODD",
+                "encoding-schema": "BCD",
                 "nature-of-address-indicator": "INTERNATIONAL"
             }
         },
         "called-party-address": {
             "routing-indicator": "ROUTING_BASED_ON_GLOBAL_TITLE",
-            "global-title-indicator": "GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_NUMBERING_PLAN_ENCODING_SCHEME_AND_NATURE_OF_ADDRESS",
+            "global-title-indicator": "0100",
             "ssn": 147,
             "global-title": {
-                "digits": "22505987070",
+                "digits": "22505987188",
                 "numbering-plan": "ISDN_TELEPHONY",
-                "encoding-schema": "BCD_ODD",
+                "encoding-schema": "BCD",
                 "nature-of-address-indicator": "INTERNATIONAL"
             }
         }
@@ -27,10 +27,11 @@
         "type": "Begin",
         "dialog": {
             "dialogId": -1,
+            "application-context-name": "",
             "origination-reference": {
                 "nature-of-address": "international_number",
                 "numbering-plan": "ISDN",
-                "address": "22505987300"
+                "address": "22505987070"
             },
             "destination-reference": {
                 "nature-of-address": "international_number",
@@ -48,13 +49,13 @@
                             "args": {
                                 "ussdString": "#100#",
                                 "coding-scheme": {
-                                    "language": "GSM7",
+                                    "language": "UCS2",
                                     "coding-group": "GeneralGsm7"
                                 },
                                 "msisdn": {
                                     "nature-of-address": "international_number",
                                     "numbering-plan": "ISDN",
-                                    "address": "22505199611"
+                                    "address": "22505571697"
                                 }
                             }
                         }

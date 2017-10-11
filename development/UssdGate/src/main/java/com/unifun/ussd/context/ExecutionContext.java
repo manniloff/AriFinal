@@ -16,7 +16,4 @@ import org.apache.http.concurrent.FutureCallback;
  */
 public interface ExecutionContext extends FutureCallback<UssMessage> {
     public final static ExecutorService EXECUTOR = Executors.newCachedThreadPool();
-    
-    public long getId();
-    public void setId(long id);
 }

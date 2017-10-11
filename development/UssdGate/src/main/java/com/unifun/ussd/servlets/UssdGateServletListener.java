@@ -16,10 +16,7 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
 import com.unifun.sigtran.adaptor.SigtranStackBean;
-import com.unifun.ussd.AsyncMapProcessor;
-import com.unifun.ussd.DeploymentScaner;
-import com.unifun.ussd.OCSQueryCluster;
-import com.unifun.ussd.TestMenu;
+import com.unifun.ussd.Gateway;
 import org.apache.log4j.Logger;
 
 public class UssdGateServletListener implements ServletContextListener {
@@ -28,31 +25,11 @@ public class UssdGateServletListener implements ServletContextListener {
 
     private static SigtranStackBean bean = null;
 //    private Map<String, Map<String, String>> appSettings = null;
-    private ExecutorService exec = Executors.newFixedThreadPool(1);
-    private final DeploymentScaner deploymentScaner = new DeploymentScaner();
+    private final ExecutorService exec = Executors.newFixedThreadPool(1);
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
         LOGGER.info("Initiating UssdGateServletListener");
-        deploymentScaner.start();
-
-        try {
-            final OCSQueryCluster ocsCluster = new OCSQueryCluster(System.getProperty("catalina.base") + "/conf/test-menu.json");
-            deploymentScaner.add(ocsCluster);
-            sce.getServletContext().setAttribute("ocs.cluster", ocsCluster);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        
-        try {
-            final TestMenu testMenu = new TestMenu(System.getProperty("catalina.base") + "/conf/test-menu.json");
-            sce.getServletContext().setAttribute("test.menu", testMenu);
-            deploymentScaner.add(testMenu);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        
         final Runnable resetCounterTask = () -> {
             loadMapListiner(sce);
         };
@@ -67,7 +44,6 @@ public class UssdGateServletListener implements ServletContextListener {
 
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
-        deploymentScaner.stop();
         this.exec.shutdown();
     }
 
@@ -83,21 +59,21 @@ public class UssdGateServletListener implements ServletContextListener {
                 //Initiate map listiner for usssd messages types
                 addMapListener(sce);
                 contextloop = false;
-
-                final AsyncMapProcessor mapProcessor = new AsyncMapProcessor(
+                
+                LOGGER.info("Creating gateway instance");
+                final Gateway gateway = new Gateway(
                         bean.getStack().getMap().getMapStack(),
                         bean.getStack().getSccp().getSccpStack().getSccpProvider()
                 );
-
-                deploymentScaner.add(mapProcessor.router());
-
+                
+                LOGGER.info("Starting gateway instance");
                 try {
-                    mapProcessor.init();
+                    gateway.start();
                 } catch (Exception e) {
                     LOGGER.error("MAP-Processor could not be initialized", e);
                 }
 
-                sce.getServletContext().setAttribute("mapProcessor", mapProcessor);
+                sce.getServletContext().setAttribute("ussd.gateway", gateway);
 
                 LOGGER.info("Initialized OCS cluster");
                 if (!exec.isTerminated()) {

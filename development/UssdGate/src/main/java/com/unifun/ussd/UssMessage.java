@@ -62,8 +62,13 @@ public class UssMessage implements Serializable {
         this.invokeId = mapMessage.getInvokeId();
         
         final JsonSccp sccp = new JsonSccp();        
-        sccp.setCallingPartyAddress(valueOf(mapMessage.getMAPDialog().getLocalAddress()));
-        sccp.setCalledPartyAddress(valueOf(mapMessage.getMAPDialog().getRemoteAddress()));
+        if (mapMessage.getMAPDialog().getLocalAddress() != null) {
+            sccp.setCallingPartyAddress(valueOf(mapMessage.getMAPDialog().getLocalAddress()));
+        }
+        
+        if (mapMessage.getMAPDialog().getRemoteAddress() != null) {
+            sccp.setCalledPartyAddress(valueOf(mapMessage.getMAPDialog().getRemoteAddress()));
+        }
 
         
         final JsonMapOperation operation = new JsonMapOperation();        
@@ -150,9 +155,21 @@ public class UssMessage implements Serializable {
                 break;
         }
         
-        AddressString origReference = mapMessage.getMAPDialog().getReceivedDestReference();        
-        AddressString destReference = mapMessage.getMAPDialog().getReceivedDestReference();
-                
+        //if dialogue portion is not known yet
+        //then we will build new one following known data
+        if (tcapDialog == null) {
+            tcapDialog = new JsonTcapDialog();
+        
+            AddressString origReference = mapMessage.getMAPDialog().getReceivedDestReference();        
+            AddressString destReference = mapMessage.getMAPDialog().getReceivedDestReference();
+            
+            tcapDialog.setOriginationReference(valueOf(origReference));
+            tcapDialog.setDestinationReference(valueOf(destReference));
+        }
+        
+        //always check the dialog id
+        tcapDialog.setDialogId(mapMessage.getMAPDialog().getLocalDialogId());
+        
         final JsonTcap tcap = new JsonTcap();
         tcap.setDialog(tcapDialog);  
         tcap.setType(mapMessage.getMAPDialog().getTCAPMessageType().name());
@@ -188,29 +205,33 @@ public class UssMessage implements Serializable {
     
     private JsonSccpAddress valueOf(SccpAddress address) {
         final JsonGlobalTitle gt = new JsonGlobalTitle();
-        gt.setDigits(address.getGlobalTitle().getDigits());
-        
-        switch (address.getGlobalTitle().getGlobalTitleIndicator()) {
-            case GLOBAL_TITLE_INCLUDES_NATURE_OF_ADDRESS_INDICATOR_ONLY :
-                gt.setNatureOfAddressIndicator(((GlobalTitle0001)address.getGlobalTitle()).getNatureOfAddress().name());
-                break;
-            case GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_ONLY :
-                break;
-            case GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_NUMBERING_PLAN_AND_ENCODING_SCHEME :
-                gt.setEncodingSchema(((GlobalTitle0011)address.getGlobalTitle()).getEncodingScheme().getType().name());
-                gt.setNumberingPlan(((GlobalTitle0011)address.getGlobalTitle()).getNumberingPlan().name());
-                break;
-            case GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_NUMBERING_PLAN_ENCODING_SCHEME_AND_NATURE_OF_ADDRESS :
-                gt.setNatureOfAddressIndicator(((GlobalTitle0100)address.getGlobalTitle()).getNatureOfAddress().name());
-                gt.setEncodingSchema(((GlobalTitle0100)address.getGlobalTitle()).getEncodingScheme().getType().name());
-                gt.setNumberingPlan(((GlobalTitle0100)address.getGlobalTitle()).getNumberingPlan().name());
-                break;
-        }
-        
-        
         JsonSccpAddress value = new JsonSccpAddress();
-        value.setGtIndicator(address.getGlobalTitle().getGlobalTitleIndicator().name());
-        value.setGlobalTitle(gt);
+        if (address.getGlobalTitle() != null) {
+            gt.setDigits(address.getGlobalTitle().getDigits());
+
+            switch (address.getGlobalTitle().getGlobalTitleIndicator()) {
+                case GLOBAL_TITLE_INCLUDES_NATURE_OF_ADDRESS_INDICATOR_ONLY:
+                    gt.setNatureOfAddressIndicator(((GlobalTitle0001) address.getGlobalTitle()).getNatureOfAddress().name());
+                    break;
+                case GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_ONLY:
+                    break;
+                case GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_NUMBERING_PLAN_AND_ENCODING_SCHEME:
+                    gt.setEncodingSchema(((GlobalTitle0011) address.getGlobalTitle()).getEncodingScheme().getType().name());
+                    gt.setNumberingPlan(((GlobalTitle0011) address.getGlobalTitle()).getNumberingPlan().name());
+                    break;
+                case GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_NUMBERING_PLAN_ENCODING_SCHEME_AND_NATURE_OF_ADDRESS:
+                    gt.setNatureOfAddressIndicator(((GlobalTitle0100) address.getGlobalTitle()).getNatureOfAddress().name());
+                    gt.setEncodingSchema(((GlobalTitle0100) address.getGlobalTitle()).getEncodingScheme().getType().name());
+                    gt.setNumberingPlan(((GlobalTitle0100) address.getGlobalTitle()).getNumberingPlan().name());
+                    break;
+            }
+            value.setGlobalTitle(gt);
+            value.setGtIndicator(address.getGlobalTitle().getGlobalTitleIndicator().name());
+        }    
+        
+        if (address.getAddressIndicator() != null) {
+            value.setRoutingIndicator(address.getAddressIndicator().getRoutingIndicator().name());
+        }
         value.setPc(address.getSignalingPointCode());
         value.setSsn(address.getSubsystemNumber());
         

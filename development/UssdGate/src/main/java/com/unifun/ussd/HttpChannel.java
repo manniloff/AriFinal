@@ -14,15 +14,15 @@ import com.unifun.map.JsonMessage;
 import com.unifun.map.JsonReturnResultLast;
 import com.unifun.map.JsonTcap;
 import com.unifun.map.JsonTcapDialog;
-import com.unifun.ussd.router.Route;
+import com.unifun.ussd.context.ExecutionContext;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.InterruptedIOException;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import javax.json.Json;
 import javax.json.JsonReader;
-import javax.json.stream.JsonParsingException;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -38,13 +38,11 @@ import org.apache.http.nio.protocol.HttpAsyncRequestExecutor;
 import org.apache.http.nio.protocol.HttpAsyncRequester;
 import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOEventDispatch;
-import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
 import org.apache.http.protocol.RequestContent;
-import org.apache.http.protocol.RequestExpectContinue;
 import org.apache.http.protocol.RequestTargetHost;
 import org.apache.http.protocol.RequestUserAgent;
 import org.apache.log4j.Logger;
@@ -54,27 +52,46 @@ import org.mobicents.protocols.ss7.tcap.api.MessageType;
  *
  * @author okulikov
  */
-public class AsyncHttpProcessor {
-
-    private final AsyncMapProcessor mapProcessor;
+public class HttpChannel implements Channel {
+    
+    private final static URL MAP_URL = MAP_URL();
+    
+    private final Gateway gateway;
+    
+    private final MapChannel mapProcessor;
     private HttpAsyncRequester requester;
     private BasicNIOConnPool pool;
     private ConnectingIOReactor ioReactor;
 
-    private final static Logger LOGGER = Logger.getLogger(AsyncHttpProcessor.class);
-
-    public AsyncHttpProcessor(AsyncMapProcessor mapProcessor) {
+    private final static Logger LOGGER = Logger.getLogger(HttpChannel.class);
+    
+    private static URL MAP_URL() {
+        try {
+            return new URL("map://localhost");
+        } catch (MalformedURLException e) {
+            return null;
+        }
+    }
+    
+    public HttpChannel(Gateway gateway) {
+        this.gateway = gateway;
+        mapProcessor = null;
+    }
+    
+    public HttpChannel(MapChannel mapProcessor) {
         this.mapProcessor = mapProcessor;
+        this.gateway = null;
     }
 
-    public void init() throws IOReactorException {
+    @Override
+    public void start() throws Exception {
         HttpProcessor httpproc = HttpProcessorBuilder.create()
                 // Use standard client-side protocol interceptors
                 .add(new RequestContent())
                 .add(new RequestTargetHost())
                 .add(new RequestConnControl())
                 .add(new RequestUserAgent("Ussd-Gateway/3.0"))
-                .add(new RequestExpectContinue(true)).build();
+                /*.add(new RequestExpectContinue(true))*/.build();
 
         // Create client-side HTTP protocol handler
         HttpAsyncRequestExecutor protocolHandler = new HttpAsyncRequestExecutor();
@@ -109,29 +126,39 @@ public class AsyncHttpProcessor {
         requester = new HttpAsyncRequester(httpproc);
     }
 
-    public void processMessage(UssMessage msg, Route route, URL url) {
-        execute(msg, url, new PrimaryPathResponseHandler(msg, route));
-    }
-
-    private void execute(UssMessage msg, URL url, FutureCallback<HttpResponse> callback) {
+    @Override
+    public void send(String uri, UssMessage msg, ExecutionContext context) {
+        URL url;
+        try {
+            url = new URL(uri);
+        } catch (MalformedURLException e) {
+            LOGGER.error("Malformed URL: " + uri);
+            context.failed(e);
+            return;
+        }
+        
         HttpHost target = new HttpHost(url.getHost(), url.getPort(), url.getProtocol());
         HttpPost post = new HttpPost(url.toExternalForm());
         post.setHeader("Content-Type", "application/json");
 
         long dialogId = msg.getTcap().getDialog().getDialogId();
 
+        
         if (LOGGER.isInfoEnabled()) {
-            LOGGER.info("(Dialog-Id): " + dialogId + " ---> " + url.toExternalForm());
+            LOGGER.info(String.format("(DID:%d) ---> %s", dialogId, uri));
         }
 
         String content = msg.toString();
-        LOGGER.info(content);
         try {
             post.setEntity(new StringEntity(content));
         } catch (UnsupportedEncodingException e) {
         }
 
 //        post.setHeader("Content-Length", Integer.toString(content.length()));
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace("TX: " + content);
+        }
+        
         HttpCoreContext coreContext = HttpCoreContext.create();
         requester.execute(
                 new BasicAsyncRequestProducer(target, post),
@@ -139,71 +166,60 @@ public class AsyncHttpProcessor {
                 pool,
                 coreContext,
                 // Handle HTTP response from a callback
-                callback);
+                new PrimaryPathResponseHandler(dialogId, context));
+    }
+
+    @Override
+    public void stop() {
     }
 
     private class PrimaryPathResponseHandler implements FutureCallback<HttpResponse> {
 
-        private final UssMessage msg;
-        private final Route route;
-        private long dialogId;
-
-        public PrimaryPathResponseHandler(UssMessage msg, Route route) {
-            this.msg = msg;
-            this.route = route;
+        private final long dialogId;
+        private final ExecutionContext context;
+        
+        public PrimaryPathResponseHandler(long dialogId, ExecutionContext context) {
+            this.dialogId = dialogId;
+            this.context = context;
         }
 
         @Override
         public void completed(HttpResponse response) {
             int statusCode = response.getStatusLine().getStatusCode();
-            dialogId = msg.getTcap().getDialog().getDialogId();
 
             if (LOGGER.isInfoEnabled()) {
-                LOGGER.info("(Dialog-Id): " + dialogId + " <--- " + response.getStatusLine());
+                LOGGER.info("(DID: " + dialogId + ") <--- " + response.getStatusLine());
             }
 
             JsonMessage resp;
-
+            
+            Channel channel = null;            
+            try {
+                channel = gateway.channel("map://");
+            } catch (Exception e) {
+            }
+            
             switch (statusCode) {
                 case 200:
                     try {
                         JsonReader reader = Json.createReader(new InputStreamReader(response.getEntity().getContent()));
                         resp = new JsonMessage(reader.readObject());
-                        mapProcessor.send(new UssMessage(resp), null);
-                    } catch (IOException e) {
-                        //broken pipe and we could not get response
-                        //initiate landing on spare band
-                        LOGGER.error("(Dialog-Id): " + dialogId + "Broken pipe: ", e);
-                        if (LOGGER.isDebugEnabled()) {
-                            LOGGER.debug("(Dialog-Id): " + dialogId + " trying spare destination");
+                        
+                        if (LOGGER.isTraceEnabled()) {
+                            LOGGER.trace("RX: " + resp);
                         }
-
-                        execute(msg, route.failureDestination(), new FailurePathResponseHandler(msg));
-                    } catch (JsonParsingException e) {
-                        LOGGER.error("(Dialog-Id): " + dialogId + "Bad response format: ", e);
-
-                        if (LOGGER.isDebugEnabled()) {
-                            LOGGER.debug("(Dialog-Id): " + dialogId + " trying spare destination");
-                        }
-
-                        execute(msg, route.failureDestination(), new FailurePathResponseHandler(msg));
-                    } catch (UnsupportedOperationException e) {
-                        LOGGER.error("(Dialog-Id): " + dialogId + "Could not send response back ", e);
-                    } catch (RuntimeException e) {
-                        LOGGER.error("(Dialog-Id): " + dialogId + "Unexpected error: ", e);
-
-                        if (LOGGER.isDebugEnabled()) {
-                            LOGGER.debug("(Dialog-Id): " + dialogId + " trying spare destination");
-                        }
-
-                        execute(msg, route.failureDestination(), new FailurePathResponseHandler(msg));
+                        
+                        context.completed(new UssMessage(resp));
+                    } catch (Exception e) { 
+                        LOGGER.error("Could not read message: ", e);
+                        context.failed(e);
                     }
                     break;
                 default:
                     if (LOGGER.isInfoEnabled()) {
                         LOGGER.info("(Dialog-Id): " + dialogId + " trying spare destination");
                     }
-                    execute(msg, route.failureDestination(), new FailurePathResponseHandler(msg));
+                    context.failed(new IOException("Response: " + statusCode));
             }
 
         }
@@ -214,74 +230,12 @@ public class AsyncHttpProcessor {
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info("(Dialog-Id): " + dialogId + " trying spare destination");
             }
-            execute(msg, route.failureDestination(), new FailurePathResponseHandler(msg));
+            context.failed(e);
         }
 
         @Override
         public void cancelled() {
-            LOGGER.info("(Dialog-Id): " + dialogId + "Tranmission has been canceled ");
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info("(Dialog-Id): " + dialogId + " trying spare destination");
-            }
-            execute(msg, route.failureDestination(), new FailurePathResponseHandler(msg));
-        }
-
-    }
-
-    private class FailurePathResponseHandler implements FutureCallback<HttpResponse> {
-
-        private final UssMessage msg;
-        private long dialogId;
-
-        public FailurePathResponseHandler(UssMessage msg) {
-            this.msg = msg;
-        }
-
-        @Override
-        public void completed(HttpResponse response) {
-            int statusCode = response.getStatusLine().getStatusCode();
-            dialogId = msg.getTcap().getDialog().getDialogId();
-
-            JsonMessage resp;
-            switch (statusCode) {
-                case 200:
-                    try {
-                        JsonReader reader = Json.createReader(new InputStreamReader(response.getEntity().getContent()));
-                        resp = new JsonMessage(reader.readObject());
-                    } catch (IOException e) {
-                        //broken pipe and we could not get response
-                        //initiate landing on spare band
-                        LOGGER.error("(Dialog-Id): " + dialogId + "Broken pipe: ", e);
-                        resp = errorResponse(msg, "Service temporary unavailable");
-                    } catch (JsonParsingException e) {
-                        LOGGER.error("(Dialog-Id): " + dialogId + "Bad response format: ", e);
-                        resp = errorResponse(msg, "Service temporary unavailable");
-                    } catch (UnsupportedOperationException e) {
-                        LOGGER.error("(Dialog-Id): " + dialogId + "Could not send response back ", e);
-                        resp = errorResponse(msg, "Service temporary unavailable");
-                    } catch (RuntimeException e) {
-                        LOGGER.error("(Dialog-Id): " + dialogId + "Unexpected error: ", e);
-                        resp = errorResponse(msg, "Service temporary unavailable");
-                    }
-                    break;
-                default:
-                    if (LOGGER.isInfoEnabled()) {
-                        LOGGER.info("(Dialog-Id): " + dialogId + " send error message");
-                    }
-                    resp = errorResponse(msg, "Service temporary unavailable");
-            }
-
-            mapProcessor.send(new UssMessage(resp), null);
-        }
-
-        @Override
-        public void failed(Exception e) {
-            LOGGER.error("(Dialog-Id): " + dialogId + "Tranmission failure: ", e);
-        }
-
-        @Override
-        public void cancelled() {
-            LOGGER.error("(Dialog-Id): " + dialogId + "Tranmission canceled");
+            context.cancelled();
         }
 
     }

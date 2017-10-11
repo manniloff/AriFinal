@@ -13,12 +13,12 @@ import java.net.URL;
  */
 public class Route implements Comparable {
     private final String pattern;
-    private final URL[] primaryDestination;
-    private final URL failureDestination;
+    private final String[] primaryDestination;
+    private final String failureDestination;
     
     private int k = 0;
     
-    public Route(String pattern, URL primaryDestination[], URL failureDestination) {
+    public Route(String pattern, String primaryDestination[], String failureDestination) {
         this.pattern = pattern;
         this.primaryDestination = primaryDestination;
         this.failureDestination = failureDestination;
@@ -28,15 +28,15 @@ public class Route implements Comparable {
         return pattern;
     }
     
-    public URL[] primaryDestionation() {
+    public String[] primaryDestionation() {
         return primaryDestination;
     }
     
-    public URL failureDestination() {
+    public String failureDestination() {
         return failureDestination;
     }
     
-    public URL nextDestination() {
+    public String nextDestination() {
         if (k == primaryDestination.length) {
             k = 0;
         }

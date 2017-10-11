@@ -8,31 +8,23 @@ package com.unifun.ussd.context;
 import com.unifun.ussd.UssMessage;
 import java.io.IOException;
 import javax.servlet.AsyncContext;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author okulikov
  */
-public class HttpExecutionContext implements ExecutionContext {
+public class HttpLocalContext implements ExecutionContext {
 
     private final AsyncContext asyncContext;
-    private long id;
-    
-    public HttpExecutionContext(AsyncContext asyncContext) {
+
+    private final static Logger LOGGER = Logger.getLogger(HttpLocalContext.class);
+
+    public HttpLocalContext(AsyncContext asyncContext) {
         this.asyncContext = asyncContext;
     }
 
-    @Override
-    public long getId() {
-        return id;
-    }
 
-    @Override
-    public void setId(long id) {
-        this.id = id;
-    }
-    
-    
     @Override
     public void completed(UssMessage msg) {
         EXECUTOR.execute(() -> {
@@ -40,25 +32,21 @@ public class HttpExecutionContext implements ExecutionContext {
                 String content = msg.toString();
                 asyncContext.getResponse().setContentType("application/json");
                 asyncContext.getResponse().setContentLength(content.length());
+
                 asyncContext.getResponse().getWriter().println(content);
                 asyncContext.getResponse().flushBuffer();
             } catch (IOException e) {
+                LOGGER.error("IO error: ", e);
             }
         });
     }
 
     @Override
     public void failed(Exception e) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public void cancelled() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    @Override
-    public String toString() {
-        return "Execution-Context {HTTP, " + id + "}";
-    }
 }

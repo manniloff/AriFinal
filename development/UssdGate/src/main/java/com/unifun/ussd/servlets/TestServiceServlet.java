@@ -12,14 +12,19 @@ import com.unifun.map.JsonMapOperation;
 import com.unifun.map.JsonMessage;
 import com.unifun.map.JsonReturnResultLast;
 import com.unifun.map.JsonTcap;
+import com.unifun.ussd.Channel;
+import com.unifun.ussd.Gateway;
 import com.unifun.ussd.TestMenu;
 import com.unifun.ussd.TestMenu.State;
+import com.unifun.ussd.UssMessage;
+import com.unifun.ussd.context.ExecutionContext;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
+import javax.servlet.AsyncContext;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -40,14 +45,15 @@ import org.apache.log4j.Logger;
  * @author rbabin
  *
  */
-@WebServlet(name = "UssdGatewayTestServlet", urlPatterns = {"/test"}, displayName = "UssdGatewayTestServlet", asyncSupported = true)
-public class UssdGatewayTestServlet extends HttpServlet {
+@WebServlet(name = "UssdGatewayTestServlet", urlPatterns = {"/test"}, 
+        displayName = "UssdGatewayTestServlet", asyncSupported = true)
+public class TestServiceServlet extends HttpServlet {
 
     /**
      *
      */
     private static final long serialVersionUID = 4348239565938673418L;
-    private static final Logger LOGGER = LogManager.getLogger(UssdGatewayTestServlet.class);
+    private static final Logger LOGGER = LogManager.getLogger(TestServiceServlet.class);
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -60,31 +66,23 @@ public class UssdGatewayTestServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        LOGGER.info("Request <---> " + req.getPathInfo());
         HttpSession session = req.getSession(true);
         try {
-            TestMenu menu = (TestMenu) req.getServletContext().getAttribute("test.menu");
+            Gateway gateway = (Gateway) req.getServletContext().getAttribute("ussd.gateway");
+            TestMenu menu = gateway.testMenu();
+
             JsonReader reader = Json.createReader(new InputStreamReader(req.getInputStream()));
             JsonObject obj = reader.readObject();
 
             JsonMessage request = new JsonMessage(obj);
-
-            LOGGER.info("Request <---> " + request.toString());
-
-            JsonMessage response = response(request, session, menu);
-            LOGGER.info("Response <---> " + response.toString());
-
-            resp.setStatus(HttpServletResponse.SC_OK);
-            resp.setContentType("application/json");
-
-            resp.getWriter().println(response.toString());
+            response(gateway, request, session, menu, req.startAsync());
         } catch (Throwable e) {
             e.printStackTrace();
             resp.getWriter().println("{\"Error\": \"" + e.getMessage() + "\"}");
         }
     }
 
-    private JsonMessage response(JsonMessage request, HttpSession session, TestMenu menu) throws IOException {
+    private void response(Gateway gateway, JsonMessage request, HttpSession session, TestMenu menu, AsyncContext context) throws IOException {
         JsonTcap tcap = request.getTcap();
         long dialogId = tcap.getDialog().getDialogId();
 
@@ -109,28 +107,22 @@ public class UssdGatewayTestServlet extends HttpServlet {
             state = menu.initial();
         }
 
-        JsonMessage resp = null;
-        if (state.getMsg() != null) {
-            resp = state.getMsg();
-        } else if (state.getUrl() != null) {
-            resp = processRedirect(state.getUrl(), request);
+        LOGGER.info("State=" + state.getName() + ", URL=" + state.getUrl());
+        TestContext menuContext = new TestContext(dialogId, invokeId(request), context);
+        if (state.getUrl() == null) {
+            menuContext.completed(new UssMessage(state.getMsg()));
+        } else {
+            LOGGER.info("Requesting URI: " + state.getUrl());
+            try {
+                Channel channel = gateway.channel(state.getUrl());
+                channel.send(text, new UssMessage(request), menuContext);
+            LOGGER.info("Sent: " + state.getUrl());
+            } catch (Exception e) {
+                menuContext.failed(e);
+            }
         }
-
-        JsonComponent component2 = (JsonComponent) resp.getTcap().getComponents().get(0);
-
-        switch (component2.getType()) {
-            case "invoke":
-                ((JsonInvoke) component.getValue()).setInvokeId(invokeId(request));
-                break;
-            default:
-                ((JsonReturnResultLast) component.getValue()).setInvokeId(invokeId(request));
-        }
-
-        resp.getTcap().getDialog().setDialogId(dialogId);
-
         State next = menu.find(state.getTransition());
         session.setAttribute("state", next);
-        return resp;
     }
 
     private long invokeId(JsonMessage msg) {
@@ -159,5 +151,59 @@ public class UssdGatewayTestServlet extends HttpServlet {
         HttpResponse response = httpclient.execute(post);
         JsonReader reader = Json.createReader(new InputStreamReader(response.getEntity().getContent()));
         return new JsonMessage(reader.readObject());
+    }
+
+    private class TestContext implements ExecutionContext {
+
+        private final long dialogID;
+        private final long invokeID;
+        private final AsyncContext context;
+
+        public TestContext(long dialogID, long invokeID, AsyncContext context) {
+            this.dialogID = dialogID;
+            this.invokeID = invokeID;
+            this.context = context;
+        }
+
+        @Override
+        public void completed(UssMessage msg) {
+            LOGGER.info("Completed: ");
+            JsonComponent component = (JsonComponent) msg.getTcap().getComponents().get(0);
+
+            switch (component.getType()) {
+                case "invoke":
+                    ((JsonInvoke) component.getValue()).setInvokeId(invokeID);
+                    break;
+                default:
+                    ((JsonReturnResultLast) component.getValue()).setInvokeId(invokeID);
+            }
+
+            msg.getTcap().getDialog().setDialogId(dialogID);
+            
+            try {
+                HttpServletResponse resp = (HttpServletResponse) context.getResponse();
+
+                resp.setStatus(HttpServletResponse.SC_OK);
+                resp.setContentType("application/json");
+
+                String content = msg.toString();
+                resp.setContentLength(content.length());
+
+                resp.getWriter().println(content);
+                resp.getWriter().flush();
+            } catch (IOException e) {
+                LOGGER.error("Could not send response", e);
+                failed(e);
+            }
+        }
+
+        @Override
+        public void failed(Exception excptn) {
+        }
+
+        @Override
+        public void cancelled() {
+        }
+
     }
 }

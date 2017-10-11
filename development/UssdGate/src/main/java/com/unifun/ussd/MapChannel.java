@@ -18,12 +18,11 @@ import com.unifun.map.JsonSccp;
 import com.unifun.map.JsonSccpAddress;
 import com.unifun.map.JsonTcap;
 import com.unifun.map.JsonTcapDialog;
+import com.unifun.ussd.context.MapLocalContext;
 import com.unifun.ussd.router.Route;
-import com.unifun.ussd.router.Router;
 import java.nio.charset.Charset;
-import java.util.concurrent.ConcurrentHashMap;
-import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.log4j.Logger;
+import org.jgroups.JChannel;
 import org.mobicents.protocols.ss7.indicator.NatureOfAddress;
 import org.mobicents.protocols.ss7.indicator.RoutingIndicator;
 import org.mobicents.protocols.ss7.map.api.MAPApplicationContext;
@@ -43,14 +42,11 @@ import org.mobicents.protocols.ss7.map.api.dialog.MAPAbortSource;
 import org.mobicents.protocols.ss7.map.api.dialog.MAPNoticeProblemDiagnostic;
 import org.mobicents.protocols.ss7.map.api.dialog.MAPRefuseReason;
 import org.mobicents.protocols.ss7.map.api.dialog.MAPUserAbortChoice;
-import org.mobicents.protocols.ss7.map.api.errors.AdditionalNetworkResource;
 import org.mobicents.protocols.ss7.map.api.errors.MAPErrorMessage;
-import org.mobicents.protocols.ss7.map.api.errors.MAPErrorMessageFactory;
 import org.mobicents.protocols.ss7.map.api.primitives.AddressNature;
 import org.mobicents.protocols.ss7.map.api.primitives.AddressString;
 import org.mobicents.protocols.ss7.map.api.primitives.ISDNAddressString;
 import org.mobicents.protocols.ss7.map.api.primitives.MAPExtensionContainer;
-import org.mobicents.protocols.ss7.map.api.primitives.NetworkResource;
 import org.mobicents.protocols.ss7.map.api.primitives.NumberingPlan;
 import org.mobicents.protocols.ss7.map.api.primitives.USSDString;
 import org.mobicents.protocols.ss7.map.api.service.supplementary.ActivateSSRequest;
@@ -92,70 +88,47 @@ import org.mobicents.protocols.ss7.tcap.asn.comp.Problem;
  *
  * @author okulikov
  */
-public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplementaryListener {
+public class MapChannel implements Channel, MAPDialogListener, MAPServiceSupplementaryListener {
 
+    private final static String INFO = "(DID:%s) %s";
+
+    private final Gateway gateway;
     //Reference for the MAP Provider
     private final MAPProvider mapProvider;
 
     //Reference for the SCCP Provider
     private final SccpProvider sccpProvider;
 
-    //Holds execution callback context
-    private final ConcurrentHashMap<Long, ExecutionContext> contextList = new ConcurrentHashMap();
-    private final ConcurrentHashMap<Long, JsonTcapDialog> dialogs = new ConcurrentHashMap();
-    
-    //HTTP related RX/TX 
-    private final AsyncHttpProcessor httpProcessor = new AsyncHttpProcessor(this);
+    private JChannel clusterChannel;
 
-    private final Router router;
-    
     //Logger instance
-    private final static Logger LOGGER = Logger.getLogger(AsyncMapProcessor.class);
+    private final static Logger LOGGER = Logger.getLogger(MapChannel.class);
 
     /**
      * Constructs new instance of this class.
      *
+     * @param gateway
      * @param mapStack
      * @param sccpProvider
      */
-    public AsyncMapProcessor(MAPStack mapStack, SccpProvider sccpProvider) {
-        this.router = new Router(System.getProperty("catalina.base") + "/conf/router.json");
+    public MapChannel(Gateway gateway, MAPStack mapStack, SccpProvider sccpProvider) {
+        this.gateway = gateway;
         this.sccpProvider = sccpProvider;
         this.mapProvider = mapStack.getMAPProvider();
     }
 
-    /**
-     * Gets access to the message router.
-     * 
-     * @return 
-     */
-    public Router router() {
-        return router;
-    }
-    
-    /**
-     * Initializes MAP/HTTP resources.
-     *
-     * @throws IOReactorException
-     */
-    public void init() throws IOReactorException {
+    @Override
+    public void start() throws Exception {
         this.mapProvider.addMAPDialogListener(this);
         this.mapProvider.getMAPServiceSupplementary().addMAPServiceListener(this);
         this.mapProvider.getMAPServiceSupplementary().acivate();
-        this.httpProcessor.init();
+
+//        clusterChannel = new JChannel();
+//        clusterChannel.connect("USSD");
     }
 
-    /**
-     * Sends given message over MAP within specified context.
-     *
-     * This method does not throw any exception and instead it delivers events
-     * via execution context.
-     *
-     * @param msg ussd message in json format.
-     * @param context asynchronous execution context related to the underlying
-     * transport.
-     */
-    public void send(UssMessage msg, ExecutionContext context) {
+    @Override
+    public void send(String url, UssMessage msg, ExecutionContext context) {
         try {
             //verify parameters
             assert msg != null : "Message can not be null";
@@ -163,7 +136,7 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
             //break original message into parts
             JsonTcap tcap = msg.getTcap();
             JsonSccp sccp = msg.getSccp();
-            
+
             //extract component from TCAP part
             JsonComponent component = tcap.getComponents().get(0);
             JsonMap map = mapMessage(component);
@@ -172,7 +145,6 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
             //if dialog exists the existing dialog will be returned
             //if not exits then new dialog will be created 
             MAPDialogSupplementary mapDialog = mapDialog(sccp, tcap);
-
             //append MAP operation
             switch (map.operationName()) {
                 case "process-unstructured-ss-request":
@@ -186,16 +158,23 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
             }
 
             //assign unique identifier to context and store context.
-            if (context != null) {
-                context.setId(mapDialog.getLocalDialogId());
-                contextList.put(mapDialog.getLocalDialogId(), context);
+            if (mapDialog.getUserObject() == null) {
+                JsonTcapDialog dialog = new JsonTcapDialog();
+                dialog.setDialogId(mapDialog.getLocalDialogId());
+                mapDialog.setUserObject(new MapDialog(dialog));
+            }
+            
+            ((MapDialog) mapDialog.getUserObject()).setContext(context);
+
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("TX: " + msg.toString());
             }
 
             if (LOGGER.isInfoEnabled()) {
-                LOGGER.info(String.format("(TC-%s): {%s} : %s ---> %s", tcap.getType(), component.getType(), map.operationName(), ctxName(context, mapDialog.getLocalDialogId())));
+                LOGGER.info(String.format(INFO, mapDialog.getLocalDialogId(), "---> " + tcap.getType() + ":" + map.operationName()));
             }
 
-            //wrap with suitable component and send the message
+            //wrap with suitable component and sendOverMap the message
             switch (tcap.getType()) {
                 case "Begin":
                 case "Continue":
@@ -218,6 +197,10 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
                 context.completed(new UssMessage(abort));
             }
         }
+    }
+
+    @Override
+    public void stop() {
     }
 
     /**
@@ -255,6 +238,8 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
     private MAPDialogSupplementary mapDialog(JsonSccp sccp, JsonTcap tcap) throws MAPException {
         MAPDialogSupplementary dialog = (MAPDialogSupplementary) mapProvider.getMAPDialog(tcap.getDialog().getDialogId());
         if (dialog == null) {
+            assert sccp != null : "SCCP part should be defined for each new dialog";
+            
             ISDNAddressString origReference = valueOf(tcap.getDialog().getOriginationReference());
             ISDNAddressString destReference = valueOf(tcap.getDialog().getDestinationReference());
 
@@ -264,6 +249,8 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
             dialog = mapProvider.getMAPServiceSupplementary()
                     .createNewDialog(MAPApplicationContext.getInstance(MAPApplicationContextName.networkUnstructuredSsContext, MAPApplicationContextVersion.version2),
                             callingPartyAddress, origReference, calledPartyAddress, destReference);
+
+            LOGGER.info(String.format(INFO, dialog.getLocalDialogId(), "---> Started"));
 
             if (this.isEricsson(tcap.getDialog())) {
                 ISDNAddressString msisdn = valueOf(tcap.getDialog().getMsisdn());
@@ -338,15 +325,15 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
         if (address == null) {
             return null;
         }
-        
+
         JsonAddressString value = new JsonAddressString();
         value.setNumberingPlan(address.getNumberingPlan().name());
         value.setNatureOfAddress(address.getAddressNature().name());
         value.setAddress(address.getAddress());
-        
+
         return value;
     }
-    
+
     /**
      * Constructs coding scheme from corresponding Json object.
      *
@@ -379,15 +366,19 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
         GlobalTitle gt = null;
         switch (gti) {
             case "0001":
+            case "GLOBAL_TITLE_INCLUDES_NATURE_OF_ADDRESS_INDICATOR_ONLY" :
                 gt = factory.createGlobalTitle(digits(address), na(address));
                 break;
             case "0010":
+            case "GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_ONLY" :
                 gt = factory.createGlobalTitle(digits(address), na(address));
                 break;
             case "0011":
+            case "GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_NUMBERING_PLAN_AND_ENCODING_SCHEME" :
                 gt = factory.createGlobalTitle(digits(address), na(address));
                 break;
             case "0100":
+            case "GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_NUMBERING_PLAN_ENCODING_SCHEME_AND_NATURE_OF_ADDRESS" :
                 gt = factory.createGlobalTitle(digits(address), 0, np(address), null, na(address));
                 break;
         }
@@ -453,72 +444,86 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
         JsonMapOperation op = (JsonMapOperation) map.operation();
         return op.getUssdString();
     }
-    
+
     private void cleanup(long id) {
-        dialogs.remove(id);
-        contextList.remove(id);
     }
-    
+
     @Override
     public void onDialogDelimiter(MAPDialog mapDialog) {
     }
 
     @Override
     public void onDialogRequest(MAPDialog mapDialog, AddressString destReference, AddressString origReference, MAPExtensionContainer extensionContainer) {
+        LOGGER.info(String.format(INFO, mapDialog.getLocalDialogId(), "<--- Started"));
+
+        JsonTcapDialog dialog = new JsonTcapDialog();
+        dialog.setDialogId(mapDialog.getLocalDialogId());
+        dialog.setDestinationReference(valueOf(destReference));
+        dialog.setOriginationReference(valueOf(origReference));
+
+        mapDialog.setUserObject(new MapDialog(dialog));
+//        dialogs.put(mapDialog.getLocalDialogId(), dialog);
     }
 
     @Override
     public void onDialogRequestEricsson(MAPDialog mapDialog, AddressString destReference, AddressString origReference, AddressString msisdn, AddressString vlrNo) {
+        LOGGER.info(String.format(INFO, mapDialog.getLocalDialogId(), "<--- Started"));
         JsonTcapDialog dialog = new JsonTcapDialog();
-        
+
         dialog.setDialogId(mapDialog.getLocalDialogId());
         dialog.setDestinationReference(valueOf(destReference));
         dialog.setOriginationReference(valueOf(origReference));
         dialog.setMsisdn(valueOf(msisdn));
         dialog.setVlrAddress(valueOf(vlrNo));
-        
-        dialogs.put(mapDialog.getLocalDialogId(), dialog);
+
+        mapDialog.setUserObject(new MapDialog(dialog));
+//        dialogs.put(mapDialog.getLocalDialogId(), dialog);
     }
 
     @Override
     public void onDialogAccept(MAPDialog mapDialog, MAPExtensionContainer extensionContainer) {
+        LOGGER.info(String.format(INFO, mapDialog.getLocalDialogId(), "<--- Accepted"));
     }
 
     @Override
     public void onDialogReject(MAPDialog mapDialog, MAPRefuseReason refuseReason, ApplicationContextName alternativeApplicationContext, MAPExtensionContainer extensionContainer) {
+        LOGGER.info(String.format(INFO, mapDialog.getLocalDialogId(), "<--- Rejected"));
         cleanup(mapDialog.getLocalDialogId());
     }
 
     @Override
     public void onDialogUserAbort(MAPDialog mapDialog, MAPUserAbortChoice userReason, MAPExtensionContainer extensionContainer) {
+        LOGGER.info(String.format(INFO, mapDialog.getLocalDialogId(), "<--- Aborted by user"));
         cleanup(mapDialog.getLocalDialogId());
     }
 
     @Override
     public void onDialogProviderAbort(MAPDialog mapDialog, MAPAbortProviderReason abortProviderReason, MAPAbortSource abortSource, MAPExtensionContainer extensionContainer) {
+        LOGGER.info(String.format(INFO, mapDialog.getLocalDialogId(), "<--- Aborted by provider"));
         cleanup(mapDialog.getLocalDialogId());
     }
 
     @Override
     public void onDialogClose(MAPDialog mapDialog) {
+        LOGGER.info(String.format(INFO, mapDialog.getLocalDialogId(), "<--- Closed"));
         cleanup(mapDialog.getLocalDialogId());
-        LOGGER.info("(TC-Close) <---> " +  mapDialog.getLocalDialogId());
     }
 
     @Override
     public void onDialogNotice(MAPDialog mapDialog, MAPNoticeProblemDiagnostic noticeProblemDiagnostic) {
+        LOGGER.info(String.format(INFO, mapDialog.getLocalDialogId(), "<--- Noticed"));
     }
 
     @Override
     public void onDialogRelease(MAPDialog mapDialog) {
+        LOGGER.info(String.format(INFO, mapDialog.getLocalDialogId(), "<--- Released"));
         cleanup(mapDialog.getLocalDialogId());
-        LOGGER.info("(TC-Release) <---> " + mapDialog.getLocalDialogId());
     }
 
     @Override
     public void onDialogTimeout(MAPDialog mapDialog) {
         cleanup(mapDialog.getLocalDialogId());
-        LOGGER.info("(TC-Timeout) <---> " + mapDialog.getLocalDialogId());
+        LOGGER.info(String.format(INFO, mapDialog.getLocalDialogId(), "Timeout"));
     }
 
     @Override
@@ -579,83 +584,154 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
 
     @Override
     public void onProcessUnstructuredSSRequest(ProcessUnstructuredSSRequest mapMessage) {
-        //convert message into json
-        UssMessage msg = convert(mapMessage, "process-unstructured-ss-request");
+        long dialogID = mapMessage.getMAPDialog().getLocalDialogId();
 
-        if (msg == null) {
-            replySystemFailure(mapMessage);
-            return;
-        }
-        
-        //print entire message as trace if enabled
-        if (LOGGER.isTraceEnabled()) {
-            LOGGER.debug("RX :" + msg.toString());
-        }
-        
-        //print log output
         if (LOGGER.isInfoEnabled()) {
-            info(msg, null, "process-unstructured-ss-request");
+            LOGGER.info(String.format(INFO, dialogID, "<--- " + mapMessage.getMAPDialog().getTCAPMessageType() + ": process-unstrcutured-ss-request"));
         }
-        
+
+        SccpAddress src = mapMessage.getMAPDialog().getRemoteAddress();
+        int pc = src.getSignalingPointCode();
+
         try {
-            Route route = router.find(ussdString(msg)); 
-            if (route == null) {
-                return;
+            UssMessage msg = jsonMessage(mapMessage, "process-unstructured-ss-request");
+
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace(String.format("RX : %d : %s", pc, msg.toString()));
             }
-            httpProcessor.processMessage(msg, route, route.nextDestination());
-        } catch (Exception e) {
-            LOGGER.error("Could not forward over HTTP", e);
-            this.replySystemFailure(mapMessage);
+            
+            //This message is initiated by provider and must be forwarded to the
+            //user using another transport
+            Route route = gateway.router().find(ussdString(msg));
+            if (route == null) {
+                throw new IllegalArgumentException("Unknown or undefined key: " + ussdString(msg));
+            }
+            
+            //store destination into memory
+            ((MapDialog) mapMessage.getMAPDialog().getUserObject()).setRoute(route);
+
+            //select primary destination
+            String url = route.nextDestination();            
+            String url2 = route.failureDestination();
+            
+            Channel channel = gateway.channel(url);
+            Channel channel2 = gateway.channel(url2);
+            
+            channel.send(url, msg, new MapLocalContext(this, url2, msg, channel2));
+        } catch (Throwable e) {
+            LOGGER.error(String.format(INFO, dialogID, "Could not start dialog"), e);
         }
     }
 
     @Override
     public void onProcessUnstructuredSSResponse(ProcessUnstructuredSSResponse msg) {
-        LOGGER.info("<--- On process unstructured ss response");
-        UssMessage m = convert(msg, "process-unstructured-ss-request");
+        long dialogID = msg.getMAPDialog().getLocalDialogId();
 
-        JsonComponent component = m.getTcap().getComponents().get(0);
-        ExecutionContext context = contextList.get(msg.getMAPDialog().getLocalDialogId());
-        
         if (LOGGER.isInfoEnabled()) {
-            LOGGER.info(String.format("(TC-%s):{%s}: process-unstructured-ss-request <--- %s",
-                    m.getTcap().getType(), component.getType(), ctxName(context, msg.getMAPDialog().getLocalDialogId())));
+            LOGGER.info(String.format(INFO, dialogID, "<--- " + msg.getMAPDialog().getTCAPMessageType() + ": unstrcutured-ss-request"));
         }
 
-        if (context != null) {
+        SccpAddress src = msg.getMAPDialog().getRemoteAddress();
+        int pc = src.getSignalingPointCode();
+
+        try {
+            UssMessage m = jsonMessage(msg, "unstructured-ss-request");
+
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace(String.format("RX : %d : %s", pc, m.toString()));
+            }
+
+            //This message has arrived from map domain as response for message
+            //initiated by user so we need to reply using context
+            ExecutionContext context = ((MapDialog) msg.getMAPDialog().getUserObject()).getContext();
+            if (context == null) {
+                throw new IllegalStateException("Out of context");
+            }
+
             context.completed(m);
-        } 
+        } catch (Throwable t) {
+            LOGGER.error(String.format(INFO, dialogID, "Unexpected error"), t);
+        }
     }
 
     @Override
     public void onUnstructuredSSRequest(UnstructuredSSRequest msg) {
-        UssMessage m = convert(msg, "unstructured-ss-request");
-        ExecutionContext context = contextList.get(msg.getMAPDialog().getLocalDialogId());
+        long dialogID = msg.getMAPDialog().getLocalDialogId();
 
         if (LOGGER.isInfoEnabled()) {
-            info(m, context, "unstructured-ss-request");
+            LOGGER.info(String.format(INFO, dialogID, "<--- " + msg.getMAPDialog().getTCAPMessageType() + ": unstrcutured-ss-request"));
         }
 
-        if (context != null) {
-            context.completed(m);
-        } else {
-            Route route = router.find(ussdString(m));        
-            httpProcessor.processMessage(m, route, route.nextDestination());
+        SccpAddress src = msg.getMAPDialog().getRemoteAddress();
+        int pc = src.getSignalingPointCode();
+
+        try {
+            UssMessage m = jsonMessage(msg, "unstructured-ss-request");
+
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace(String.format("RX : %d : %s", pc, m.toString()));
+            }
+
+           MapDialog dialog = ((MapDialog) msg.getMAPDialog().getUserObject());
+           if (dialog != null && dialog.getContext() != null) {
+               dialog.getContext().completed(m);
+               return;
+           }
+            //Route object might exists 
+            Route route = ((MapDialog) msg.getMAPDialog().getUserObject()).getRoute();            
+            if (route == null) {
+                //if Route object is not defined yet, then we can define it now
+                route = gateway.router().find(ussdString(m));
+                if (route == null) {
+                    throw new IllegalArgumentException("Unknown or undefined key: " + ussdString(m));
+                }
+            
+                //store destination into memory
+                ((MapDialog) msg.getMAPDialog().getUserObject()).setRoute(route);
+            }
+
+            //select primary destination
+            String url = route.nextDestination();
+            String url2 = route.failureDestination();
+            
+            Channel channel = gateway.channel(url);
+            Channel channel2 = gateway.channel(url2);
+            
+            channel.send(url, m, new MapLocalContext(this, url2, m, channel2));
+        } catch (Throwable t) {
+            LOGGER.error(String.format(INFO, dialogID, "Unexpected error"), t);
         }
     }
 
     @Override
     public void onUnstructuredSSResponse(UnstructuredSSResponse msg) {
-        LOGGER.info("<--- " + msg.getMessageType().name());
-        UssMessage m = convert(msg, "unstructured-ss-request");
+        long dialogID = msg.getMAPDialog().getLocalDialogId();
 
-        ExecutionContext context = contextList.get(msg.getMAPDialog().getLocalDialogId());
-        if (context == null) {
-            LOGGER.warn("Process-unstructured-ss-request: Out of context: " + msg.getMAPDialog().getLocalDialogId());
-            return;
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info(String.format(INFO, dialogID, "<---" + msg.getMAPDialog().getTCAPMessageType() + ": unstrcutured-ss-request"));
         }
 
-        context.completed(m);
+        SccpAddress src = msg.getMAPDialog().getRemoteAddress();
+        int pc = src.getSignalingPointCode();
+
+        try {
+            UssMessage m = jsonMessage(msg, "unstructured-ss-request");
+
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace(String.format("RX : %d : %s", pc, m.toString()));
+            }
+
+            //This message has arrived from map domain as response for message
+            //initiated by user so we need to reply using context
+            ExecutionContext context = ((MapDialog) msg.getMAPDialog().getUserObject()).getContext();
+            if (context == null) {
+                throw new IllegalStateException("Out of context");
+            }
+
+            context.completed(m);
+        } catch (Throwable t) {
+            LOGGER.error(String.format(INFO, dialogID, "Unexpected error"), t);
+        }
     }
 
     @Override
@@ -668,20 +744,7 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
 
     @Override
     public void onErrorComponent(MAPDialog mapDialog, Long invokeId, MAPErrorMessage mapErrorMessage) {
-        JsonMessage msg = new JsonMessage();
-        JsonTcap tcap = new JsonTcap();
-        
-        tcap.setType("Error");
-        tcap.setAbortMessage(mapErrorMessage.toString());
-        
-        msg.setTcap(tcap);
-        ExecutionContext context = contextList.get(mapDialog.getLocalDialogId());
-        if (context == null) {
-            LOGGER.warn("Error component: " + mapDialog.getLocalDialogId());
-            return;
-        }
-
-        context.completed(new UssMessage(msg));
+        LOGGER.warn(String.format(INFO, mapDialog.getLocalDialogId(), "Error component invokeID=" + invokeId + ", " + mapErrorMessage));
     }
 
     @Override
@@ -696,35 +759,16 @@ public class AsyncMapProcessor implements MAPDialogListener, MAPServiceSupplemen
     public void onMAPMessage(MAPMessage mapMessage) {
     }
 
-    private UssMessage convert(SupplementaryMessage msg, String evt) {
-        try {
-            return new UssMessage(msg, dialogs.get(msg.getMAPDialog().getLocalDialogId()), evt);
-        } catch (Exception e) {
-            LOGGER.error("Could not convert into json format", e);
-            return null;
-        }
+    /**
+     * Converts
+     *
+     * @param msg
+     * @param evt
+     * @return
+     */
+    private UssMessage jsonMessage(SupplementaryMessage msg, String evt) {
+        return new UssMessage(msg, ((MapDialog) msg.getMAPDialog().getUserObject()).getDialog(), evt);
     }
-    
-    private String ctxName(ExecutionContext context, long dialogId) {
-        return context != null
-                ? context.toString()
-                : "ExecutionContext(NULL, " + dialogId + ")";
-    }
-    
-    private void replySystemFailure(SupplementaryMessage msg) {
-        try {
-            MAPErrorMessageFactory f = mapProvider.getMAPErrorMessageFactory();
-            MAPErrorMessage m = f.createMAPErrorMessageSystemFailure(3, NetworkResource.eir, AdditionalNetworkResource.nplr, null);
-            msg.getMAPDialog().sendErrorComponent(msg.getInvokeId(), m);
-            msg.getMAPDialog().close(false);
-        } catch (Exception e) {
-            LOGGER.error("Could not send ERROR message", e);
-        }
-    }
-    
-    private void info(UssMessage m, ExecutionContext context, String operation) {
-        JsonComponent component = m.getTcap().getComponents().get(0);
-        LOGGER.info(String.format("(TC-%s):{%s}: %s <--- %s",
-                m.getTcap().getType(), component.getType(), operation, ctxName(context, m.getTcap().getDialog().getDialogId())));
-    }
+
+
 }
