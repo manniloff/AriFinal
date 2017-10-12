@@ -54,11 +54,8 @@ import org.mobicents.protocols.ss7.tcap.api.MessageType;
  */
 public class HttpChannel implements Channel {
     
-    private final static URL MAP_URL = MAP_URL();
-    
     private final Gateway gateway;
     
-    private final MapChannel mapProcessor;
     private HttpAsyncRequester requester;
     private BasicNIOConnPool pool;
     private ConnectingIOReactor ioReactor;
@@ -75,13 +72,8 @@ public class HttpChannel implements Channel {
     
     public HttpChannel(Gateway gateway) {
         this.gateway = gateway;
-        mapProcessor = null;
     }
     
-    public HttpChannel(MapChannel mapProcessor) {
-        this.mapProcessor = mapProcessor;
-        this.gateway = null;
-    }
 
     @Override
     public void start() throws Exception {

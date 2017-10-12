@@ -14,8 +14,6 @@ import com.unifun.map.JsonReturnResultLast;
 import com.unifun.map.JsonTcap;
 import com.unifun.map.JsonTcapDialog;
 import com.unifun.ussd.context.ExecutionContext;
-import com.unifun.ussd.context.OcsLocalContext;
-import java.net.URL;
 import org.apache.log4j.Logger;
 
 /**
@@ -54,10 +52,12 @@ public class LocalChannel implements Channel {
         //by callback object HttpLocalContext
         try {
             Channel channel = gateway.channel("map://localhost");
+            
             long dialogId = msg.getTcap().getDialog().getDialogId();
-
+            long invokeID = invokeID(msg.getTcap());
+            
             //send received message over map with async callback handler
-            channel.send(null, new UssMessage(ocsQuery), new OcsContext(dialogId, context));
+            channel.send(null, new UssMessage(ocsQuery), new OcsContext(dialogId, invokeID, context));
         } catch (Exception e) {
             context.failed(e);
         }
@@ -76,6 +76,7 @@ public class LocalChannel implements Channel {
         JsonTcapDialog dialog2 = tcap2.getDialog();
 
         dialog2.setDestinationReference(dialog1.getDestinationReference());
+        
 //        dialog2.setOriginationReference(dialog1.getOriginationReference());
 
         if (dialog2.getMsisdn() != null) {
@@ -89,12 +90,24 @@ public class LocalChannel implements Channel {
         JsonMapOperation op1 = operation(tcap1);
         JsonMapOperation op2 = operation(tcap2);
 
-        op2.setUssdString(op1.getUssdString());
+//        op2.setUssdString(op1.getUssdString());
         if (op2.getMsisdn() != null) {
             op2.setMsisdn(op1.getMsisdn());
         }
     }
 
+    private long invokeID(JsonTcap tcap) {
+        JsonComponent component1 = tcap.getComponents().get(0);
+        switch (component1.getType()) {
+            case "invoke":
+                JsonInvoke invoke = (JsonInvoke) component1.getValue();
+                return invoke.getInvokeId();
+            case "returnResultLast":
+                JsonReturnResultLast returnResultLast = (JsonReturnResultLast) component1.getValue();
+                return returnResultLast.getInvokeId();
+        }
+        return 0;
+    }
     private JsonMapOperation operation(JsonTcap tcap) {
         JsonComponent component1 = tcap.getComponents().get(0);
         switch (component1.getType()) {
@@ -112,16 +125,27 @@ public class LocalChannel implements Channel {
     private class OcsContext implements ExecutionContext {
 
         private final long dialogId;
+        private final long invokeID;
         private final ExecutionContext context;
 
-        public OcsContext(long dialogId, ExecutionContext context) {
+        public OcsContext(long dialogId, long invokeID, ExecutionContext context) {
             this.dialogId = dialogId;
+            this.invokeID = invokeID;
             this.context = context;
         }
 
         @Override
         public void completed(UssMessage msg) {
             msg.getTcap().getDialog().setDialogId(dialogId);
+            JsonComponent component1 = msg.getTcap().getComponents().get(0);
+            switch (component1.getType()) {
+                case "invoke":
+                    JsonInvoke invoke = (JsonInvoke) component1.getValue();
+                    invoke.setInvokeId(invokeID);
+                case "returnResultLast":
+                    JsonReturnResultLast returnResultLast = (JsonReturnResultLast) component1.getValue();
+                    returnResultLast.setInvokeId(invokeID);
+            }
             context.completed(msg);
         }
 

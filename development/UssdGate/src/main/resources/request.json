@@ -2,23 +2,23 @@
     "sccp": {
         "calling-party-address": {
             "routing-indicator": "ROUTING_BASED_ON_GLOBAL_TITLE",
-            "global-title-indicator": "GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_NUMBERING_PLAN_ENCODING_SCHEME_AND_NATURE_OF_ADDRESS",
-            "ssn": 147,
+            "global-title-indicator": "0100",
+            "ssn": 7,
             "global-title": {
-                "digits": "22505987300",
+                "digits": "97259180888",
                 "numbering-plan": "ISDN_TELEPHONY",
-                "encoding-schema": "BCD_ODD",
+                "encoding-schema": "BCD",
                 "nature-of-address-indicator": "INTERNATIONAL"
             }
         },
         "called-party-address": {
             "routing-indicator": "ROUTING_BASED_ON_GLOBAL_TITLE",
-            "global-title-indicator": "GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_NUMBERING_PLAN_ENCODING_SCHEME_AND_NATURE_OF_ADDRESS",
-            "ssn": 147,
+            "global-title-indicator": "0100",
+            "ssn": 6,
             "global-title": {
-                "digits": "22505987070",
+                "digits": "97259105999",
                 "numbering-plan": "ISDN_TELEPHONY",
-                "encoding-schema": "BCD_ODD",
+                "encoding-schema": "BCD",
                 "nature-of-address-indicator": "INTERNATIONAL"
             }
         }
@@ -27,15 +27,26 @@
         "type": "Begin",
         "dialog": {
             "dialogId": -1,
+            "application-context-name": "",
             "origination-reference": {
                 "nature-of-address": "international_number",
                 "numbering-plan": "ISDN",
-                "address": "22505987300"
+                "address": "97259180888"
             },
             "destination-reference": {
+                "nature-of-address": "national_significant_number",
+                "numbering-plan": "telex",
+                "address": "5052013608172"
+            },
+            "msisdn": {
                 "nature-of-address": "international_number",
-                "numbering-plan": "land_mobile",
-                "address": "612051448372009"
+                "numbering-plan": "ISDN",
+                "address": "972594512427"
+            },
+            "vlr-address": {
+                "nature-of-address": "international_number",
+                "numbering-plan": "ISDN",
+                "address": "37369101013"
             }
         },
         "components": [{
@@ -46,15 +57,10 @@
                         "component": {
                             "operation": "process-unstructured-ss-request",
                             "args": {
-                                "ussdString": "#100#",
+                                "ussdString": "*642#",
                                 "coding-scheme": {
-                                    "language": "GSM7",
+                                    "language": "UCS2",
                                     "coding-group": "GeneralGsm7"
-                                },
-                                "msisdn": {
-                                    "nature-of-address": "international_number",
-                                    "numbering-plan": "ISDN",
-                                    "address": "22505199611"
                                 }
                             }
                         }

@@ -133,7 +133,7 @@ public class OCSServlet extends HttpServlet {
         JsonMapOperation op1 = operation(tcap1);
         JsonMapOperation op2 = operation(tcap2);
 
-        op2.setUssdString(op1.getUssdString());
+//        op2.setUssdString(op1.getUssdString());
         if (op2.getMsisdn() != null) {
             op2.setMsisdn(op1.getMsisdn());
         }

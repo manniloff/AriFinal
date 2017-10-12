@@ -675,6 +675,7 @@ public class MapChannel implements Channel, MAPDialogListener, MAPServiceSupplem
            MapDialog dialog = ((MapDialog) msg.getMAPDialog().getUserObject());
            if (dialog != null && dialog.getContext() != null) {
                dialog.getContext().completed(m);
+               dialog.setContext(null);
                return;
            }
             //Route object might exists 
@@ -720,15 +721,33 @@ public class MapChannel implements Channel, MAPDialogListener, MAPServiceSupplem
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(String.format("RX : %d : %s", pc, m.toString()));
             }
-
-            //This message has arrived from map domain as response for message
-            //initiated by user so we need to reply using context
-            ExecutionContext context = ((MapDialog) msg.getMAPDialog().getUserObject()).getContext();
-            if (context == null) {
-                throw new IllegalStateException("Out of context");
+           MapDialog dialog = ((MapDialog) msg.getMAPDialog().getUserObject());
+           if (dialog != null && dialog.getContext() != null) {
+               dialog.getContext().completed(m);
+               dialog.setContext(null);
+               return;
+           }
+            //Route object might exists 
+            Route route = ((MapDialog) msg.getMAPDialog().getUserObject()).getRoute();            
+            if (route == null) {
+                //if Route object is not defined yet, then we can define it now
+                route = gateway.router().find(ussdString(m));
+                if (route == null) {
+                    throw new IllegalArgumentException("Unknown or undefined key: " + ussdString(m));
+                }
+            
+                //store destination into memory
+                ((MapDialog) msg.getMAPDialog().getUserObject()).setRoute(route);
             }
 
-            context.completed(m);
+            //select primary destination
+            String url = route.nextDestination();
+            String url2 = route.failureDestination();
+            
+            Channel channel = gateway.channel(url);
+            Channel channel2 = gateway.channel(url2);
+            
+            channel.send(url, m, new MapLocalContext(this, url2, m, channel2));
         } catch (Throwable t) {
             LOGGER.error(String.format(INFO, dialogID, "Unexpected error"), t);
         }
