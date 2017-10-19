@@ -9,11 +9,9 @@ import com.unifun.map.JsonMessage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -33,25 +31,30 @@ public class TestMenu implements Deployment {
     private final Logger LOGGER = Logger.getLogger(TestMenu.class);
     private final AtomicReference<HashMap<String, State>> menu = new AtomicReference();
     
+    private State state;
+    
     public TestMenu(String path) {
         this.file = new File(path);
     }
+    
     @Override
     public boolean isModified() {
         return new Date(file.lastModified()).after(lastReload);
     }
 
-    public State initial() {
-        for (State s : menu.get().values()) {
-            if (s.isInitial()) {
-                return s;
-            }
-        }
-        return null;
+    public State state() {
+        return state;
     }
     
-    public State find(String name) {
-        return menu.get().get(name);
+    public void reset() {
+        menu.get().values().stream().filter((s) -> (s.isInitial())).forEach((s) -> {
+            state = s;
+        });
+    }
+    
+    public State transit(String s) {
+        state = state.transit(s);
+        return state;
     }
     
     @Override
@@ -70,7 +73,6 @@ public class TestMenu implements Deployment {
             JsonObject state = states.getJsonObject(i);
             
             String name = state.getString("name");
-            String pattern = state.getString("ussd-text");
             
             JsonMessage msg = null;
             JsonObject m = state.getJsonObject("message");
@@ -84,10 +86,21 @@ public class TestMenu implements Deployment {
                 url = s.getString();
             }
             
-            String transition = state.getString("transition");
             boolean initial = state.getBoolean("initial");
             boolean end = state.getBoolean("final");
-            map.put(name, new State(name, pattern, msg, url, transition, initial, end));
+            
+            ArrayList<Transition> transitions = new ArrayList();
+            JsonArray list = state.getJsonArray("transitions");
+            
+            for (int j = 0; j < list.size(); j++) {
+                JsonObject o = list.getJsonObject(j);
+                
+                String pattern = o.getString("pattern");
+                String stateName = o.getString("state");
+                
+                transitions.add(new Transition(pattern, stateName));
+            }
+            map.put(name, new State(name, msg, url, transitions, initial, end));
         }
         menu.set(map);
     }
@@ -104,31 +117,34 @@ public class TestMenu implements Deployment {
     
     public class State {
         private final String name;
-        private final String pattern;
         private final JsonMessage msg;
         private final String url;
-        private final String transition;
         private final boolean initial;
         private final boolean end;
         
-        public State(String name, String pattern, JsonMessage msg, String url, 
-                String transition, boolean initial, boolean end) {
+        private List<Transition> transitions;
+        
+        public State(String name, JsonMessage msg, String url, 
+                List<Transition> transitions, boolean initial, boolean end) {
             this.name = name;
-            this.pattern = pattern;
             this.msg = msg;
             this.url = url;
-            this.transition = transition;
+            this.transitions = transitions;
             this.initial = initial;
             this.end = end;
         }
 
+        public State transit(String key) {
+            for (Transition t : transitions) {
+                if (key.matches(t.pattern)) {
+                    return menu.get().get(t.stateName);
+                }
+            }
+            return null;
+        }
         
         public String getName() {
             return name;
-        }
-
-        public String getPattern() {
-            return pattern;
         }
 
         public JsonMessage getMsg() {
@@ -139,10 +155,6 @@ public class TestMenu implements Deployment {
             return url;
         }
         
-        public String getTransition() {
-            return transition;
-        }
-
         public boolean isInitial() {
             return initial;
         }
@@ -150,7 +162,15 @@ public class TestMenu implements Deployment {
         public boolean isEnd() {
             return end;
         }
+    }
+    
+    public class Transition {
+        private final String pattern;
+        private final String stateName;
         
-        
+        public Transition(String pattern, String stateName) {
+            this.pattern = pattern;
+            this.stateName = stateName;
+        }
     }
 }

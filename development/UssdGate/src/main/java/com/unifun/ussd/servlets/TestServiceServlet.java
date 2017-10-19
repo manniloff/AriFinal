@@ -75,54 +75,55 @@ public class TestServiceServlet extends HttpServlet {
             JsonObject obj = reader.readObject();
 
             JsonMessage request = new JsonMessage(obj);
-            response(gateway, request, session, menu, req.startAsync());
+
+            JsonTcap tcap = request.getTcap();
+            long dialogId = tcap.getDialog().getDialogId();
+
+            JsonComponent component = tcap.getComponents().get(0);
+            
+            JsonMap map;
+            long invokeID;
+            switch (component.getType()) {
+                case "invoke":
+                    map = (JsonMap) ((JsonInvoke) component.getValue()).component();
+                    invokeID = ((JsonInvoke) component.getValue()).getInvokeId();
+                    break;
+                default:
+                    map = (JsonMap) ((JsonReturnResultLast) component.getValue()).component();
+                    invokeID = ((JsonReturnResultLast) component.getValue()).getInvokeId();
+                    break;
+            }
+
+            JsonMapOperation op = (JsonMapOperation) map.operation();
+            String text = op.getUssdString();
+
+            LOGGER.info("Request " + text);
+            
+            if ("Begin".equals(tcap.getType())) {
+                menu.reset();
+            } else {
+                menu.transit(text);
+            }
+            
+            State state = menu.state();
+            TestContext menuContext = new TestContext(dialogId, invokeID, req.startAsync());
+
+            if (state.getMsg() != null) {
+                menuContext.completed(new UssMessage(state.getMsg()));
+            } else {
+                LOGGER.info("Requesting URI: " + state.getUrl());
+                try {
+                    Channel channel = gateway.channel(state.getUrl());
+                    channel.send(text, new UssMessage(request), menuContext);
+                    LOGGER.info("Sent: " + state.getUrl());
+                } catch (Exception e) {
+                    menuContext.failed(e);
+                }
+            }
         } catch (Throwable e) {
             e.printStackTrace();
             resp.getWriter().println("{\"Error\": \"" + e.getMessage() + "\"}");
         }
-    }
-
-    private void response(Gateway gateway, JsonMessage request, HttpSession session, TestMenu menu, AsyncContext context) throws IOException {
-        JsonTcap tcap = request.getTcap();
-        long dialogId = tcap.getDialog().getDialogId();
-
-        JsonComponent component = tcap.getComponents().get(0);
-        JsonMap map = null;
-        switch (component.getType()) {
-            case "invoke":
-                map = (JsonMap) ((JsonInvoke) component.getValue()).component();
-                break;
-            default:
-                map = (JsonMap) ((JsonReturnResultLast) component.getValue()).component();
-                break;
-        }
-
-        JsonMapOperation op = (JsonMapOperation) map.operation();
-        String text = op.getUssdString();
-
-        LOGGER.info("Request " + text);
-
-        State state = (State) session.getAttribute("state");
-        if (state == null) {
-            state = menu.initial();
-        }
-
-        LOGGER.info("State=" + state.getName() + ", URL=" + state.getUrl());
-        TestContext menuContext = new TestContext(dialogId, invokeId(request), context);
-        if (state.getUrl() == null) {
-            menuContext.completed(new UssMessage(state.getMsg()));
-        } else {
-            LOGGER.info("Requesting URI: " + state.getUrl());
-            try {
-                Channel channel = gateway.channel(state.getUrl());
-                channel.send(text, new UssMessage(request), menuContext);
-            LOGGER.info("Sent: " + state.getUrl());
-            } catch (Exception e) {
-                menuContext.failed(e);
-            }
-        }
-        State next = menu.find(state.getTransition());
-        session.setAttribute("state", next);
     }
 
     private long invokeId(JsonMessage msg) {
