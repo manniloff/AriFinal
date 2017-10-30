@@ -1,0 +1,76 @@
+
+{
+    "sccp": {
+        "calling-party-address": {
+            "routing-indicator": "Route-on-GT",
+            "global-title-indicator": "0100",
+            "ssn": 6,
+            "global-title": {
+                "numbering-plan": "isdn",
+                "encoding-schema": "BCD",
+                "nature-of-address-indicator": "International",
+                "digits": "1234567"
+            }
+        },
+        "called-party-address": {
+            "routing-indicator": "Route-on-SSN",
+            "global-title-indicator": "0100",
+            "ssn": 6,
+            "global-title": {
+                "numbering-plan": "isdn",
+                "encoding-schema": "BCD",
+                "nature-of-address-indicator": "International",
+                "digits": "1234567"
+            }
+        }
+
+    },
+    "tcap": {
+        "type": "begin",
+        "dialog": {
+            "dialogId": 123,
+            "application-context-name": "",
+            "origination-reference": {
+                "address": "123",
+                "nature-of-address": "",
+                "numbering-plan": ""
+            },
+            "destination-reference": {
+                "address": "1234",
+                "nature-of-address": "",
+                "numbering-plan": ""
+            },
+            "msisdn": {
+                "address": "234",
+                "nature-of-address": "",
+                "numbering-plan": ""
+            },
+            "vlr-address": {
+                "address": "567",
+                "nature-of-address": "",
+                "numbering-plan": ""
+
+            }
+        },
+        "components": [{
+                "component": {
+                    "type": "invoke",
+                    "value": {
+                        "invokeID": 1,
+                        "component": {
+                            "operation": "process-unstructured-ss-request",
+                            "args": {
+                                "ussdString": "\\*643#",
+                                "msisdn": {
+                                    "address": "9023629581",
+                                    "nature-of-address": "",
+                                    "numbering-plan": ""
+                                }
+                            }
+                        }
+                    }
+                }
+            }]
+    }
+}
+   

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context antiJARLocking="true" path="/BeepCall">
+	<ResourceLink global="shared/bean/SigtranObjectFactory" name="bean/SigtranObjectFactory" type="com.unifun.sigtran.adaptor.SigtranStackBean"/>
+	<Resource name="jdbc/BeepCallSig" auth="Container" 
+		type="javax.sql.DataSource"
+		driverClassName="com.mysql.jdbc.Driver"
+		username="beepcallsig"
+		password="beepcallsig"
+		url="jdbc:mysql://127.0.0.1:3306/BeepCallSig?noAccessToProcedureBodies=true"
+		factory="org.apache.tomcat.jdbc.pool.DataSourceFactory"
+		jdbcInterceptors="org.apache.tomcat.jdbc.pool.interceptor.ConnectionState;org.apache.tomcat.jdbc.pool.interceptor.StatementFinalizer"
+		initialSize="3"
+		maxActive="500"
+		maxWait="10000"
+		minEvictableIdleTimeMillis="30000"
+		minIdle="10"
+		removeAbandoned="true"
+		removeAbandonedTimeout="60"
+		testOnBorrow="true" 
+		testOnReturn="false" 
+		testWhileIdle="true" 
+		timeBetweenEvictionRunsMillis="30000" 
+		validationInterval="30000" 
+		validationQuery="SELECT 1"
+	/>
+	<ResourceLink name="jdbc/BeepCallSig"
+             global="jdbc/BeepCallSig"
+              type="javax.sql.DataSource" />
+</Context>

@@ -1,0 +1,30 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
+<h:head>
+</h:head>
+<h:body>
+	<h:form>	
+		<p:focus for="terminal" />
+		<p:terminal id="terminal" widgetVar="term"
+			commandHandler="#{terminalEmuBean.handleCommand}"
+			welcomeMessage="Welcome to Unifun SS7 Shell manager, type help for availabel commands" prompt="unifun $" />
+		<p:commandButton type="button" value="Clear" icon="ui-icon-trash" id="btn1"
+			onclick="PF('term').clear()" style="margin-top:10px" />			
+	</h:form>
+	<script>
+		//var $cont = $('.ui-terminal');	
+		//$('.ui-terminal-input').keyup(function(e) {
+		  //  if (e.keyCode == 13) {		    	
+		       // $cont.scrollTop($cont[0].scrollHeight);	
+		      // $cont.scrollTop($cont.height());
+		    //   $cont.animate({ scrollTop: $cont.height()}, 200);
+		       //alert($cont[0].scrollHeight);
+		   // }
+	//	});
+	</script>
+</h:body>
+</html>

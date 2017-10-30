@@ -1,0 +1,26 @@
+sccpAddress: 1
+sccpPc: 4300
+mscAddress: 2
+mscPc: 4800 # ok 
+ssnO: 6
+ssnD: 8
+sc: 22240000035
+typeOfNumber: InternationalNumber
+numberingPlanIdentification: ISDNTelephoneNumberingPlan
+addressNature: international_number
+numberingPlan: ISDN
+routingIndicator: ROUTING_BASED_ON_GLOBAL_TITLE
+globalTitleMsc: 
+  type: GT0100
+  translationType: 0
+  numberingPlan: ISDN_TELEPHONY
+  natureOfAddress: INTERNATIONAL
+  digits: 22240000080
+globalTitleHlr: 
+  type: GT0100
+  translationType: 0
+  numberingPlan: ISDN_TELEPHONY # LAND_MOBILE 
+  natureOfAddress: INTERNATIONAL
+  digits: 22240000080
+threads: 500
+alerturl: "http://localhost:7080/"

@@ -1,0 +1,67 @@
+{
+    "sccp": {
+        "calling-party-address": {
+            "routing-indicator": "null",
+            "global-title-indicator": "GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_NUMBERING_PLAN_ENCODING_SCHEME_AND_NATURE_OF_ADDRESS",
+            "pc": 380,
+            "ssn": 6,
+            "global-title": {
+                "digits": "9023629580",
+                "numbering-plan": "ISDN_TELEPHONY",
+                "encoding-schema": "BCD_EVEN",
+                "nature-of-address-indicator": "INTERNATIONAL"
+            }
+        },
+        "called-party-address": {
+            "routing-indicator": "null",
+            "global-title-indicator": "GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_NUMBERING_PLAN_ENCODING_SCHEME_AND_NATURE_OF_ADDRESS",
+            "pc": 0,
+            "ssn": 6,
+            "global-title": {
+                "digits": "9023629581",
+                "numbering-plan": "ISDN_TELEPHONY",
+                "encoding-schema": "BCD_EVEN",
+                "nature-of-address-indicator": "INTERNATIONAL"
+            }
+        }
+    },
+    "tcap": {
+        "type": "Begin",
+        "dialog": {
+            "dialogId": -1,
+            "origination-reference": {
+                "nature-of-address": "international_number",
+                "numbering-plan": "ISDN",
+                "address": "1234"
+            },
+            "destination-reference": {
+                "nature-of-address": "international_number",
+                "numbering-plan": "ISDN",
+                "address": "1234"
+            }
+        },
+        "components": [{
+                "component": {
+                    "type": "invoke",
+                    "value": {
+                        "invokeID": 1,
+                        "component": {
+                            "operation": "processUnstructuredSSRequest_Request",
+                            "args": {
+                                "ussdString": "*643#",
+                                "numbering-plan": {
+                                    "language": "GSM7",
+                                    "coding-group": "GeneralGsm7"
+                                },
+                                "msisdn": {
+                                    "nature-of-address": "international_number",
+                                    "numbering-plan": "ISDN",
+                                    "address": "9023629581"
+                                }
+                            }
+                        }
+                    }
+                }
+            }]
+    }
+}

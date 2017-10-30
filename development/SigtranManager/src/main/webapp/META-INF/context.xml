@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context antiJARLocking="true" path="/UnifunSigtranConnector">
+<!-- 	<Resource name="shared/bean/SigtranObjectFactory" auth="Container" -->
+<!-- 	          type="com.unifun.sigtran.adaptor.SigtranConnectorBean" -->
+<!-- 	          factory="com.unifun.sigtran.adaptor.SigtranObjectFactory"	           -->
+<!-- 	/> -->
+	<ResourceLink global="shared/bean/SigtranObjectFactory" name="bean/SigtranObjectFactory" type="com.unifun.sigtran.adaptor.SigtranStackBean"/>
+</Context>

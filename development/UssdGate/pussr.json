@@ -1,0 +1,97 @@
+ "sccp": {
+
+        "calling-party-address": {
+
+            "routing-indicator": "ROUTING_BASED_ON_GLOBAL_TITLE",
+
+            "global-title-indicator": "0100",
+
+            "ssn" : 6,            
+
+            "global-title": {
+
+                "numbering-plan": "ISDN_TELEPHONY",
+
+                "encoding-schema": "BCD",
+
+                "nature-of-address-indicator": "INTERNATIONAL",
+
+                "digits": "97259180888"
+
+            }
+
+        },
+
+        "called-party-address": {
+
+            "routing-indicator": "ROUTING_BASED_ON_GLOBAL_TITLE",
+
+            "global-title-indicator": "0100",
+
+            "ssn" : 6,            
+
+            "global-title": {
+
+                "numbering-plan": "ISDN_TELEPHONY",
+
+                "encoding-schema": "BCD",
+
+                "nature-of-address-indicator": "INTERNATIONAL",
+
+                "digits": "97259105909"
+
+            }
+
+        }
+
+
+
+    },
+
+    "tcap": {
+
+        "dialog": {
+
+            "application-context-name": "",
+
+            "origination-reference": "97259180888",
+
+            "destination-reference": "97259105909",
+
+            "msisdn" : "972599001510",
+
+            "vlr-address" : "97259125999"
+
+        },
+
+        "components": [{
+
+                "component": {
+
+                    "type": "invoke",
+
+                    "value": {
+
+                        "invokeID": 1,
+
+                        "component": {
+
+                            "operation": "process-unstructured-ss-request",
+
+                            "args": {
+
+                                "ussdString": "*643#"
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }]
+
+    }
+
+}

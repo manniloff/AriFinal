@@ -1,0 +1,125 @@
+{
+    "states": [
+        {
+            "name": "welcome",
+            "initial": true,
+            "final": false,
+            "transitions": [
+                {
+                    "pattern": "1",
+                    "state": "page-1"
+                }
+
+            ],
+            "message": {
+                "tcap": {
+                    "type": "Continue",
+                    "dialog": {
+                        "dialogId": -1
+                    },
+                    "components": [{
+                            "component": {
+                                "type": "invoke",
+                                "value": {
+                                    "invokeID": 1,
+                                    "component": {
+                                        "operation": "unstructured-ss-request",
+                                        "args": {
+                                            "ussdString": "Continue with 1",
+                                            "coding-scheme": {
+                                                "coding-group": "GeneralGsm7",
+                                                "language": "UCS2"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }]
+                }
+
+
+            }
+        },
+        {
+            "name": "page-1",
+            "initial": false,
+            "final": true,
+            "transitions": [
+                {
+                    "pattern": "2",
+                    "state": "page-1"
+                }
+
+            ],
+            "message": {
+                "tcap": {
+                    "type": "Continue",
+                    "dialog": {
+                        "dialogId": -1
+                    },
+                    "components": [{
+                            "component": {
+                                "type": "invoke",
+                                "value": {
+                                    "invokeID": 2,
+                                    "component": {
+                                        "operation": "unstructured-ss-request",
+                                        "args": {
+                                            "ussdString": "Continue with 2",
+                                            "coding-scheme": {
+                                                "coding-group": "GeneralGsm7",
+                                                "language": "UCS2"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }]
+                }
+
+
+            }
+        },
+        {
+            "name": "page-2",
+            "initial": false,
+            "final": true,
+            "transitions": [
+                {
+                    "pattern": "3",
+                    "state": "page-1"
+                }
+
+            ],
+            "message": {
+                "tcap": {
+                    "type": "End",
+                    "dialog": {
+                        "dialogId": -1
+                    },
+                    "components": [{
+                            "component": {
+                                "type": "returnResultLast",
+                                "value": {
+                                    "invokeID": 2,
+                                    "component": {
+                                        "operation": "unstructured-ss-request",
+                                        "args": {
+                                            "ussdString": "Ended",
+                                            "coding-scheme": {
+                                                "coding-group": "GeneralGsm7",
+                                                "language": "UCS2"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }]
+                }
+
+
+            }
+        }
+
+    ]
+}

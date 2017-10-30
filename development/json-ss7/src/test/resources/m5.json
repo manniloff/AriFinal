@@ -1,0 +1,33 @@
+{
+    "tcap": {
+        "type": "End",
+        "dialog": {
+            "dialogId": 63
+        },
+        "components": [{
+                "component": {
+                    "type": "returnResultLast",
+                    "value": {
+                        "invokeID": 1,
+                        "component": {
+                            "operation": "unstructured-ss-request",
+                            "args": {
+                                "ussdString": "Hisobingiz: $49.9990. Tarifingiz \"Do'stlar orasida\".\nTest Teaser Uzbek. Balance 0.00 - 9999.99. Limit of Shows 2. Time 14.05 - 16.00",
+                                "coding-scheme": {
+                                    "coding-group": "GeneralGsm7",
+                                    "language": "GSM7"
+                                },
+                                "msisdn": {
+                                    "address": "998946191400",
+                                    "nature-of-address": "international_number",
+                                    "numbering-plan": "ISDN"
+                                }
+                            }
+                        }
+                    }
+                }
+            }]
+
+    }
+
+}
