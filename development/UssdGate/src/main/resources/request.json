@@ -1,71 +1,31 @@
 {
-    "sccp": {
-        "calling-party-address": {
-            "routing-indicator": "ROUTING_BASED_ON_GLOBAL_TITLE",
-            "global-title-indicator": "0100",
-            "ssn": 7,
-            "global-title": {
-                "digits": "97259180888",
-                "numbering-plan": "ISDN_TELEPHONY",
-                "encoding-schema": "BCD",
-                "nature-of-address-indicator": "INTERNATIONAL"
-            }
-        },
-        "called-party-address": {
-            "routing-indicator": "ROUTING_BASED_ON_GLOBAL_TITLE",
-            "global-title-indicator": "0100",
-            "ssn": 6,
-            "global-title": {
-                "digits": "97259105999",
-                "numbering-plan": "ISDN_TELEPHONY",
-                "encoding-schema": "BCD",
-                "nature-of-address-indicator": "INTERNATIONAL"
-            }
-        }
-    },
     "tcap": {
-        "type": "Begin",
+        "type": "End",
         "dialog": {
-            "dialogId": -1,
-            "application-context-name": "",
-            "origination-reference": {
-                "nature-of-address": "international_number",
-                "numbering-plan": "ISDN",
-                "address": "97259180888"
-            },
-            "destination-reference": {
-                "nature-of-address": "national_significant_number",
-                "numbering-plan": "telex",
-                "address": "5052013608172"
-            },
-            "msisdn": {
-                "nature-of-address": "international_number",
-                "numbering-plan": "ISDN",
-                "address": "972594512427"
-            },
-            "vlr-address": {
-                "nature-of-address": "international_number",
-                "numbering-plan": "ISDN",
-                "address": "37369101013"
-            }
-        },
-        "components": [{
-                "component": {
-                    "type": "invoke",
-                    "value": {
-                        "invokeID": 1,
-                        "component": {
-                            "operation": "process-unstructured-ss-request",
-                            "args": {
-                                "ussdString": "*642#",
-                                "coding-scheme": {
-                                    "language": "UCS2",
-                                    "coding-group": "GeneralGsm7"
+            "dialogId": 63,
+            "components": [{
+                    "component": {
+                        "type": "returnResultLast",
+                        "value": {
+                            "invokeID": 1,
+                            "component": {
+                                "operation": "unstructured-ss-request",
+                                "args": {
+                                    "ussdString": "Hisobingiz: $49.9990. Tarifingiz \"Do'stlar orasida\".\nTest Teaser Uzbek. Balance 0.00 - 9999.99. Limit of Shows 2. Time 14.05 - 16.00",
+                                    "coding-scheme": {
+                                        "coding-group": "GeneralGsm7",
+                                        "language": "GSM7"
+                                    },
+                                    "msisdn": {
+                                        "address": "998946191400",
+                                        "nature-of-address": "international_number",
+                                        "numbering-plan": "ISDN"
+                                    }
                                 }
                             }
                         }
                     }
-                }
-            }]
+                }]
+        }
     }
 }

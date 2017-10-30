@@ -8,6 +8,7 @@ package com.unifun.ussd.context;
 import com.unifun.ussd.UssMessage;
 import java.io.IOException;
 import javax.servlet.AsyncContext;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 
 /**
@@ -31,12 +32,17 @@ public class HttpLocalContext implements ExecutionContext {
             try {
                 String content = msg.toString();
                 asyncContext.getResponse().setContentType("application/json");
+                
+                ((HttpServletResponse)asyncContext.getResponse()).setStatus(HttpServletResponse.SC_OK);
+                ((HttpServletResponse)asyncContext.getResponse()).addHeader("Connection", "keep-alive");
                 asyncContext.getResponse().setContentLength(content.length());
 
                 asyncContext.getResponse().getWriter().println(content);
                 asyncContext.getResponse().flushBuffer();
             } catch (IOException e) {
                 LOGGER.error("IO error: ", e);
+            } finally {
+                asyncContext.complete();
             }
         });
     }

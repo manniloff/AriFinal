@@ -5,8 +5,6 @@
  */
 package com.unifun.ussd.router;
 
-import java.net.URL;
-
 /**
  *
  * @author okulikov
@@ -17,11 +15,13 @@ public class Route implements Comparable {
     private final String failureDestination;
     
     private int k = 0;
+    private final int maxRoutes;
     
     public Route(String pattern, String primaryDestination[], String failureDestination) {
         this.pattern = pattern;
         this.primaryDestination = primaryDestination;
         this.failureDestination = failureDestination;
+        this.maxRoutes = primaryDestination.length;
     }
         
     public String pattern() {
@@ -36,8 +36,8 @@ public class Route implements Comparable {
         return failureDestination;
     }
     
-    public String nextDestination() {
-        if (k == primaryDestination.length) {
+    public synchronized String nextDestination() {
+        if (k == maxRoutes) {
             k = 0;
         }
         return primaryDestination[k++];

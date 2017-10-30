@@ -62,14 +62,6 @@ public class HttpChannel implements Channel {
 
     private final static Logger LOGGER = Logger.getLogger(HttpChannel.class);
     
-    private static URL MAP_URL() {
-        try {
-            return new URL("map://localhost");
-        } catch (MalformedURLException e) {
-            return null;
-        }
-    }
-    
     public HttpChannel(Gateway gateway) {
         this.gateway = gateway;
     }
@@ -152,6 +144,8 @@ public class HttpChannel implements Channel {
         }
         
         HttpCoreContext coreContext = HttpCoreContext.create();
+        
+        
         requester.execute(
                 new BasicAsyncRequestProducer(target, post),
                 new BasicAsyncResponseConsumer(),

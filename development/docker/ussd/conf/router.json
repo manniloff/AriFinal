@@ -1,0 +1,12 @@
+{
+    "routes": [
+        {
+            "pattern": "\\*643#",
+            "primary-destination": {
+                "mode": "loadsharing",
+                "url": ["http://127.0.0.1:7081/UssdGate/test"]
+            },
+            "failure-destination": "http://127.0.0.1:7080/UssdGate/test"
+        }
+    ]
+}

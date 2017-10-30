@@ -5,6 +5,9 @@
  */
 package com.unifun.map;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import javax.json.Json;
@@ -132,5 +135,38 @@ public class JsonRequestTest {
         
         System.out.println(t1 + "-------------" + pattern);
         System.out.println(t1.matches(pattern));
+    }
+    
+    @Test
+    public void testFromBinary() throws Exception {
+        InputStream in = getClass().getResourceAsStream("/message4.json");
+        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+        String line;
+        
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        while((line = reader.readLine()) != null) {
+            String tokens[] = line.trim().split(" ");
+            for (String token : tokens) {
+                bout.write(Integer.parseInt(token, 16));
+            }
+        }
+        
+        ByteArrayInputStream bin = new ByteArrayInputStream(bout.toByteArray());
+        System.out.println(new String(bout.toByteArray()));
+        JsonReader r = Json.createReader(new InputStreamReader(bin));
+        JsonObject obj = r.readObject();
+        
+        JsonMessage req = new JsonMessage(obj);
+        System.out.println("--------------" + req);
+    }
+    
+        @Test
+    public void testProblemMessage() {
+        InputStream in = getClass().getResourceAsStream("/m5.json");
+        JsonReader reader = Json.createReader(new InputStreamReader(in));
+        JsonObject obj = reader.readObject();
+        
+        JsonMessage req = new JsonMessage(obj);
+        System.out.println("Problem:" + req);
     }
 }

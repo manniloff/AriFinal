@@ -28,6 +28,7 @@ public class Gateway {
     
     private final static Logger LOGGER = Logger.getLogger(Gateway.class);
     
+    
     /**
      * Creates new instance of this gateway.
      * 
